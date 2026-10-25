@@ -10,7 +10,6 @@
             --bg: #eaf2fb; --card: #f7fbff; --text: #1e2a3a; --text-muted: #6b7c93;
             --primary: #2a6fb0; --primary-soft: #bcd6f0; --border: #d0e0f0;
             --danger: #c05c5c; --success: #4a8c6b;
-            --accepted: #c98a5a; --processing: #c9a05a; --delivery: #4a7fa0; --cancelled: #8a827a;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
@@ -31,14 +30,14 @@
         .category-btn.active { background: var(--primary); color: #f7fbff; border-color: var(--primary); }
 
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-        .product-card { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+        .product-card { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
         .product-card:active { transform: scale(0.98); }
         .product-card img { width: 100%; height: 170px; object-fit: cover; background: #d8e6f5; }
         .product-card .info { padding: 12px; }
         .product-card .info h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .product-card .info .price { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: var(--primary); }
         .product-card .info .sizes { font-size: 11px; color: var(--text-muted); }
-        .product-card .out-of-stock-badge { position: absolute; top: 8px; left: 8px; background: rgba(30,42,58,0.75); color: white; font-size: 10px; padding: 3px 8px; border-radius: 8px; }
+        .out-of-stock-badge { position: absolute; top: 8px; left: 8px; background: rgba(30,42,58,0.75); color: white; font-size: 10px; padding: 3px 8px; border-radius: 8px; }
 
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(30,42,58,0.4); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-overlay.active { display: flex; }
@@ -55,8 +54,9 @@
         .product-detail .price { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: var(--primary); }
         .product-detail .desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
         .size-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-        .size-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: transparent; cursor: pointer; font-size: 14px; color: var(--text); }
+        .size-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: transparent; cursor: pointer; font-size: 14px; color: var(--text); position: relative; }
         .size-btn.active { border-color: var(--primary); background: var(--primary); color: #f7fbff; }
+        .size-btn.disabled { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
         .qty-control { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
         .qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
         .qty-value { font-size: 16px; font-weight: 500; min-width: 24px; text-align: center; }
@@ -109,7 +109,6 @@
         .meeting-box { background: var(--primary-soft); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.5; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 14px; }
 
-        /* Полноэкранный зум */
         #zoom-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 200; align-items: center; justify-content: center; overflow: hidden; }
         #zoom-overlay.active { display: flex; }
         #zoom-img { max-width: 100%; max-height: 100%; transition: transform 0.3s; cursor: zoom-in; touch-action: none; }
@@ -136,37 +135,25 @@
         </div>
     </div>
 
-    <!-- ТОВАР -->
     <div class="modal-overlay" id="product-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Товар</h2>
-                <button class="close-btn" onclick="closeModal('product-modal')">×</button>
-            </div>
+            <div class="modal-header"><h2>Товар</h2><button class="close-btn" onclick="closeModal('product-modal')">×</button></div>
             <div class="modal-body" id="product-modal-content"></div>
             <div class="modal-footer" id="product-modal-footer"></div>
         </div>
     </div>
 
-    <!-- КОРЗИНА -->
     <div class="modal-overlay" id="cart-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Корзина</h2>
-                <button class="close-btn" onclick="closeModal('cart-modal')">×</button>
-            </div>
+            <div class="modal-header"><h2>Корзина</h2><button class="close-btn" onclick="closeModal('cart-modal')">×</button></div>
             <div class="modal-body" id="cart-modal-content"></div>
             <div class="modal-footer" id="cart-modal-footer"></div>
         </div>
     </div>
 
-    <!-- ОФОРМЛЕНИЕ -->
     <div class="modal-overlay" id="checkout-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Оформление</h2>
-                <button class="close-btn" onclick="closeModal('checkout-modal')">×</button>
-            </div>
+            <div class="modal-header"><h2>Оформление</h2><button class="close-btn" onclick="closeModal('checkout-modal')">×</button></div>
             <div class="modal-body">
                 <div class="form-group"><label>Имя</label><input type="text" id="customer-name" placeholder="Иван Иванов"></div>
                 <div class="form-group"><label>Телефон</label><input type="tel" id="customer-phone" placeholder="+7 (999) 123-45-67"></div>
@@ -176,7 +163,6 @@
         </div>
     </div>
 
-    <!-- УСПЕХ -->
     <div class="modal-overlay" id="success-modal">
         <div class="modal">
             <div class="modal-body">
@@ -190,26 +176,18 @@
         </div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div class="modal-overlay" id="profile-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Профиль</h2>
-                <button class="close-btn" onclick="closeModal('profile-modal'); switchTab('catalog');">×</button>
-            </div>
+            <div class="modal-header"><h2>Профиль</h2><button class="close-btn" onclick="closeModal('profile-modal'); switchTab('catalog');">×</button></div>
             <div class="modal-body" id="profile-content"><p class="empty-state">Загрузка...</p></div>
         </div>
     </div>
 
-    <!-- ЛИСТ ОЖИДАНИЯ (форма) -->
     <div class="modal-overlay" id="waitlist-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Сообщить о наличии</h2>
-                <button class="close-btn" onclick="closeModal('waitlist-modal')">×</button>
-            </div>
+            <div class="modal-header"><h2>Сообщить о наличии</h2><button class="close-btn" onclick="closeModal('waitlist-modal')">×</button></div>
             <div class="modal-body">
-                <div class="waitlist-note">Этот товар сейчас закончился. Оставьте свои данные — мы сообщим, когда он появится.</div>
+                <div class="waitlist-note">Этого товара сейчас нет. Оставьте данные — сообщим, когда появится.</div>
                 <div class="form-group"><label>Имя</label><input type="text" id="waitlist-name" placeholder="Ваше имя"></div>
                 <div class="form-group"><label>Телефон</label><input type="tel" id="waitlist-phone" placeholder="+7 (999) 123-45-67"></div>
                 <div id="waitlist-status" style="color: var(--danger); font-size: 13px;"></div>
@@ -218,21 +196,19 @@
         </div>
     </div>
 
-    <!-- УСПЕХ ЛИСТА ОЖИДАНИЯ -->
     <div class="modal-overlay" id="waitlist-success-modal">
         <div class="modal">
             <div class="modal-body">
                 <div class="success-screen">
                     <div class="success-icon">✓</div>
                     <h2>Записали!</h2>
-                    <p>Мы свяжемся с вами, как только товар появится в наличии.</p>
+                    <p>Свяжемся с вами, как только товар появится.</p>
                     <button class="btn btn-primary" onclick="closeModal('waitlist-success-modal')">Хорошо</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
             <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -246,7 +222,6 @@
         </div>
     </div>
 
-    <!-- ПОЛНОЭКРАННЫЙ ЗУМ -->
     <div id="zoom-overlay">
         <button class="zoom-close" onclick="closeZoom()">×</button>
         <img id="zoom-img" src="" alt="">
@@ -288,7 +263,7 @@
         }
 
         let allProducts = [];
-        let cart = []; // { ..., selected: true/false }
+        let cart = [];
         let currentCategory = '';
         let searchQuery = '';
         let selectedProduct = null;
@@ -296,7 +271,6 @@
         let selectedQty = 1;
         let tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
         let currentProfile = null;
-        let unsubProfile = null;
         let unsubOrders = null;
         let waitlistProductId = null;
 
@@ -305,7 +279,6 @@
             if (tgUser && tgUser.id) await loadProfile();
         }
 
-        // ===== ПОИСК =====
         window.onSearch = function() {
             searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
             document.getElementById('search-clear').style.display = searchQuery ? 'block' : 'none';
@@ -318,7 +291,6 @@
             renderProducts();
         };
 
-        // ===== ПРОФИЛЬ =====
         async function loadProfile() {
             try {
                 const ref = doc(db, "profiles", String(tgUser.id));
@@ -337,7 +309,6 @@
             currentProfile = { name, phone, telegramUsername: tgUser.username || '' };
         }
 
-        // ===== ТОВАРЫ =====
         async function loadProducts() {
             const snap = await getDocs(collection(db, "products"));
             allProducts = [];
@@ -352,12 +323,21 @@
                 allProducts.push({
                     id: d.id, name: p.name, description: p.description || '',
                     price: p.price, category: p.category || 'Без категории',
-                    sizes: p.sizes || [], images,
-                    inStock: p.inStock !== false // по умолчанию true
+                    sizes: p.sizes || [],
+                    unavailableSizes: p.unavailableSizes || [],
+                    images, inStock: p.inStock !== false
                 });
             });
             renderCategories();
             renderProducts();
+        }
+
+        // Все ли размеры недоступны (или товар вообще не в наличии)
+        function isProductOutOfStock(p) {
+            if (!p.inStock) return true;
+            if (p.sizes.length === 0) return false; // если размеров нет — товар доступен (по общему флагу)
+            const availableSizes = p.sizes.filter(s => !p.unavailableSizes.includes(s));
+            return availableSizes.length === 0;
         }
 
         function renderCategories() {
@@ -385,29 +365,33 @@
                 container.innerHTML = `<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">${searchQuery ? 'Ничего не найдено' : 'Товаров нет'}</p>`;
                 return;
             }
-            container.innerHTML = filtered.map(p => `
-                <div class="product-card" style="position:relative;" onclick="openProduct('${p.id}')">
+            container.innerHTML = filtered.map(p => {
+                const outOfStock = isProductOutOfStock(p);
+                return `
+                <div class="product-card" onclick="openProduct('${p.id}')">
                     <img src="${p.images[0] || 'https://via.placeholder.com/200?text=No'}" alt="${p.name}">
-                    ${!p.inStock ? '<div class="out-of-stock-badge">Нет в наличии</div>' : ''}
+                    ${outOfStock ? '<div class="out-of-stock-badge">Нет в наличии</div>' : ''}
                     <div class="info">
                         <h3>${p.name}</h3>
                         <div class="price">${p.price} ₽</div>
-                        <div class="sizes">${p.sizes.length ? p.sizes.join(' · ') : ''}</div>
+                        <div class="sizes">${p.sizes.join(' · ')}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         window.openProduct = function(id) {
             selectedProduct = allProducts.find(p => p.id === id);
             if (!selectedProduct) return;
-            selectedSize = selectedProduct.sizes.length > 0 ? selectedProduct.sizes[0] : null;
+            const availableSizes = selectedProduct.sizes.filter(s => !selectedProduct.unavailableSizes.includes(s));
+            selectedSize = availableSizes.length > 0 ? availableSizes[0] : null;
             selectedQty = 1;
+            const outOfStock = isProductOutOfStock(selectedProduct);
+
             const content = document.getElementById('product-modal-content');
-            const outOfStock = !selectedProduct.inStock;
             content.innerHTML = `
                 <div class="product-detail">
-                    <img src="${selectedProduct.images[0] || 'https://via.placeholder.com/300?text=No'}" class="product-detail-img" id="main-detail-img" onclick="openZoom('${selectedProduct.images[0] || ''}')">
+                    <img src="${selectedProduct.images[0] || 'https://via.placeholder.com/300?text=No'}" class="product-detail-img" onclick="openZoom('${selectedProduct.images[0] || ''}')">
                     ${selectedProduct.images.length > 1 ? `
                         <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;">
                             ${selectedProduct.images.map(img => `<img src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="document.getElementById('main-detail-img').src='${img}'">`).join('')}
@@ -417,10 +401,14 @@
                     <div class="price">${selectedProduct.price} ₽</div>
                     ${outOfStock ? '<div style="color:var(--danger); font-size:13px; margin-bottom:10px;">Сейчас нет в наличии</div>' : ''}
                     <div class="desc">${selectedProduct.description}</div>
-                    ${!outOfStock && selectedProduct.sizes.length > 0 ? `
+                    ${selectedProduct.sizes.length > 0 ? `
                         <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Размер</div>
                         <div class="size-selector" id="size-selector">
-                            ${selectedProduct.sizes.map(s => `<button class="size-btn ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${s}')">${s}</button>`).join('')}
+                            ${selectedProduct.sizes.map(s => {
+                                const un = selectedProduct.unavailableSizes.includes(s);
+                                const act = s === selectedSize && !un;
+                                return `<button class="size-btn ${un ? 'disabled' : ''} ${act ? 'active' : ''}" ${un ? 'disabled' : ''} onclick="selectSize('${s}')">${s}</button>`;
+                            }).join('')}
                         </div>
                     ` : ''}
                     ${!outOfStock ? `
@@ -440,9 +428,12 @@
         };
 
         window.selectSize = function(size) {
+            // Проверяем, доступен ли размер
+            if (!selectedProduct) return;
+            if (selectedProduct.unavailableSizes.includes(size)) return;
             selectedSize = size;
             document.querySelectorAll('#size-selector .size-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText === size);
+                btn.classList.toggle('active', btn.innerText === size && !btn.disabled);
             });
         };
 
@@ -453,6 +444,11 @@
 
         window.addToCartFromModal = function() {
             if (!selectedProduct) return;
+            // Проверка: если у товара есть размеры, размер должен быть выбран и доступен
+            if (selectedProduct.sizes.length > 0) {
+                if (!selectedSize) { alert('Выберите размер'); return; }
+                if (selectedProduct.unavailableSizes.includes(selectedSize)) { alert('Этот размер недоступен'); return; }
+            }
             cart.push({
                 productId: selectedProduct.id, name: selectedProduct.name,
                 price: selectedProduct.price, size: selectedSize, qty: selectedQty,
@@ -473,7 +469,6 @@
             else { badge.style.display = 'none'; }
         }
 
-        // ===== КОРЗИНА С ВЫБОРОМ =====
         window.renderCart = function() {
             const content = document.getElementById('cart-modal-content');
             const footer = document.getElementById('cart-modal-footer');
@@ -521,7 +516,6 @@
             cart[index].selected = !cart[index].selected;
             renderCart();
         };
-
         window.removeFromCart = function(index) { cart.splice(index, 1); updateCartBadge(); renderCart(); };
         window.changeCartQty = function(index, delta) {
             cart[index].qty += delta;
@@ -564,7 +558,6 @@
                     status: "new", createdAt: new Date()
                 });
                 if (tgUser && tgUser.id) await saveProfile(name, phone);
-                // Удаляем только выбранные из корзины
                 cart = cart.filter(i => !i.selected);
                 updateCartBadge();
                 document.getElementById('customer-name').value = '';
@@ -581,7 +574,6 @@
             }
         };
 
-        // ===== ЛИСТ ОЖИДАНИЯ =====
         window.openWaitlist = function() {
             if (!selectedProduct) return;
             waitlistProductId = selectedProduct.id;
@@ -621,7 +613,6 @@
             }
         };
 
-        // ===== ЗУМ =====
         window.openZoom = function(src) {
             if (!src) return;
             const img = document.getElementById('zoom-img');
@@ -632,15 +623,9 @@
         window.closeZoom = function() {
             document.getElementById('zoom-overlay').classList.remove('active');
         };
-        document.getElementById('zoom-img').addEventListener('click', function() {
-            this.classList.toggle('zoomed');
-        });
-        document.getElementById('zoom-img').addEventListener('dblclick', function(e) {
-            e.preventDefault();
-            this.classList.toggle('zoomed');
-        });
+        document.getElementById('zoom-img').addEventListener('click', function() { this.classList.toggle('zoomed'); });
+        document.getElementById('zoom-img').addEventListener('dblclick', function(e) { e.preventDefault(); this.classList.toggle('zoomed'); });
 
-        // ===== ПРОФИЛЬ ЭКРАН =====
         async function renderProfile() {
             const content = document.getElementById('profile-content');
             if (!tgUser || !tgUser.id) {
