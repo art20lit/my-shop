@@ -7,33 +7,49 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #f0ece6; --card: #faf8f5; --text: #3a3632; --text-muted: #8a827a;
-            --primary: #6b6259; --primary-soft: #d6cec4; --border: #e0d9d0;
-            --danger: #b85c5c; --success: #6b8e6b;
+            --bg: #eaf2fb;              /* светло-голубой фон */
+            --card: #f7fbff;            /* почти белый с голубым оттенком */
+            --text: #1e2a3a;            /* тёмно-синий текст */
+            --text-muted: #6b7c93;      /* приглушённый серо-голубой */
+            --primary: #2a6fb0;         /* насыщенный синий (акцент) */
+            --primary-soft: #bcd6f0;    /* светло-голубой (мягкий акцент) */
+            --border: #d0e0f0;          /* голубая обводка */
+            --danger: #c05c5c;
+            --success: #4a8c6b;
+            --accepted: #c98a5a;
+            --processing: #c9a05a;
+            --delivery: #4a7fa0;
+            --cancelled: #8a827a;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
 
         .header { padding: 18px 20px 10px; background: var(--bg); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: 0.5px; }
-        .header .icon { font-size: 18px; opacity: 0.6; cursor: pointer; }
+
+        /* Поиск */
+        .search-bar { padding: 0 20px 10px; }
+        .search-input-wrap { position: relative; }
+        .search-input-wrap input { width: 100%; padding: 12px 40px 12px 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; background: var(--card); color: var(--text); outline: none; }
+        .search-input-wrap input:focus { border-color: var(--primary); }
+        .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px 8px; line-height: 1; }
 
         .container { padding: 0 20px; }
-        .categories { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 18px; scrollbar-width: none; }
+        .categories { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 18px; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
         .category-btn { padding: 7px 14px; background: transparent; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; color: var(--text-muted); transition: 0.25s; }
-        .category-btn.active { background: var(--primary); color: #faf8f5; border-color: var(--primary); }
+        .category-btn.active { background: var(--primary); color: #f7fbff; border-color: var(--primary); }
 
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
         .product-card { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
         .product-card:active { transform: scale(0.98); }
-        .product-card img { width: 100%; height: 170px; object-fit: cover; background: #e8e2da; }
+        .product-card img { width: 100%; height: 170px; object-fit: cover; background: #d8e6f5; }
         .product-card .info { padding: 12px; }
         .product-card .info h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .product-card .info .price { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: var(--primary); }
         .product-card .info .sizes { font-size: 11px; color: var(--text-muted); }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(58,54,50,0.35); z-index: 100; align-items: flex-end; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(30,42,58,0.4); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--card); width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -43,24 +59,24 @@
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); }
 
-        .product-detail-img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #e8e2da; }
+        .product-detail-img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #d8e6f5; }
         .product-detail h2 { margin: 0 0 8px; font-size: 19px; font-weight: 500; }
         .product-detail .price { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: var(--primary); }
         .product-detail .desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
         .size-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
         .size-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: transparent; cursor: pointer; font-size: 14px; color: var(--text); }
-        .size-btn.active { border-color: var(--primary); background: var(--primary); color: #faf8f5; }
+        .size-btn.active { border-color: var(--primary); background: var(--primary); color: #f7fbff; }
         .qty-control { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
         .qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
         .qty-value { font-size: 16px; font-weight: 500; min-width: 24px; text-align: center; }
 
         .btn { width: 100%; padding: 15px; border: none; border-radius: 14px; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; letter-spacing: 0.3px; }
-        .btn-primary { background: var(--primary); color: #faf8f5; }
-        .btn-primary:active { background: #5a534b; }
+        .btn-primary { background: var(--primary); color: #f7fbff; }
+        .btn-primary:active { background: #1f5a94; }
         .btn-small { padding: 8px 14px; border: 1px solid var(--border); background: transparent; border-radius: 10px; font-size: 13px; cursor: pointer; color: var(--text); }
 
         .cart-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
-        .cart-item img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; background: #e8e2da; }
+        .cart-item img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; background: #d8e6f5; }
         .cart-item .info { flex: 1; min-width: 0; }
         .cart-item .info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 500; }
         .cart-item .info .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
@@ -81,7 +97,7 @@
         .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 20px; border-radius: 12px; transition: 0.2s; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-        .badge { background: var(--primary); color: #faf8f5; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
+        .badge { background: var(--primary); color: #f7fbff; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
 
         .profile-name { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
         .profile-username { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
@@ -104,7 +120,12 @@
     <div id="main-screen">
         <div class="header">
             <h1>Каталог</h1>
-            <div class="icon" onclick="alert('Поиск в разработке')">🔍</div>
+        </div>
+        <div class="search-bar">
+            <div class="search-input-wrap">
+                <input type="text" id="search-input" placeholder="Поиск по названию..." oninput="onSearch()">
+                <button class="search-clear" id="search-clear" style="display:none;" onclick="clearSearch()">×</button>
+            </div>
         </div>
         <div class="container">
             <div class="categories" id="categories-container"></div>
@@ -214,13 +235,12 @@
         const auth = getAuth(app);
         signInAnonymously(auth).catch(e => console.error("Auth error:", e));
 
-        // Единый словарь статусов
         const STATUSES = {
-            new:        { text: 'Новый',               color: '#b85c5c' },
+            new:        { text: 'Новый',               color: '#c05c5c' },
             accepted:   { text: 'Принято',             color: '#c98a5a' },
             processing: { text: 'Взят в обработку',    color: '#c9a05a' },
-            delivery:   { text: 'В процессе доставки', color: '#6b8aa0' },
-            done:       { text: 'Завершён',            color: '#6b8e6b' },
+            delivery:   { text: 'В процессе доставки', color: '#4a7fa0' },
+            done:       { text: 'Завершён',            color: '#4a8c6b' },
             cancelled:  { text: 'Отказ',               color: '#8a827a' }
         };
         function normalizeStatus(s) {
@@ -233,6 +253,7 @@
         let allProducts = [];
         let cart = [];
         let currentCategory = '';
+        let searchQuery = '';
         let selectedProduct = null;
         let selectedSize = null;
         let selectedQty = 1;
@@ -245,6 +266,19 @@
             await loadProducts();
             if (tgUser && tgUser.id) await loadProfile();
         }
+
+        // ===== ПОИСК =====
+        window.onSearch = function() {
+            searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
+            document.getElementById('search-clear').style.display = searchQuery ? 'block' : 'none';
+            renderProducts();
+        };
+        window.clearSearch = function() {
+            document.getElementById('search-input').value = '';
+            searchQuery = '';
+            document.getElementById('search-clear').style.display = 'none';
+            renderProducts();
+        };
 
         // ===== ПРОФИЛЬ =====
         async function loadProfile() {
@@ -304,9 +338,12 @@
 
         function renderProducts() {
             const container = document.getElementById('products-grid');
-            const filtered = allProducts.filter(p => !currentCategory || p.category === currentCategory);
+            let filtered = allProducts;
+            if (currentCategory) filtered = filtered.filter(p => p.category === currentCategory);
+            if (searchQuery) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery));
+
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">Товаров нет</p>';
+                container.innerHTML = `<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">${searchQuery ? 'Ничего не найдено' : 'Товаров нет'}</p>`;
                 return;
             }
             container.innerHTML = filtered.map(p => `
@@ -475,7 +512,7 @@
             }
         };
 
-        // ===== ПРОФИЛЬ ЭКРАН (с реальным временем) =====
+        // ===== ПРОФИЛЬ ЭКРАН =====
         async function renderProfile() {
             const content = document.getElementById('profile-content');
             if (!tgUser || !tgUser.id) {
@@ -484,7 +521,6 @@
             }
             if (!currentProfile) await loadProfile();
 
-            // Отписываемся от старых слушателей
             if (unsubOrders) { unsubOrders(); unsubOrders = null; }
 
             content.innerHTML = `
@@ -499,7 +535,6 @@
                 <div id="orders-history-container"><p class="empty-state">Загрузка...</p></div>
             `;
 
-            // Подписка в реальном времени на заказы клиента
             const q = query(collection(db, "orders"), where("customerTelegramId", "==", String(tgUser.id)));
             unsubOrders = onSnapshot(q, (snap) => {
                 const orders = [];
@@ -547,7 +582,6 @@
 
         window.openEditProfile = function() {
             const content = document.getElementById('profile-content');
-            // Отписываемся от заказов, пока редактируем
             if (unsubOrders) { unsubOrders(); unsubOrders = null; }
             content.innerHTML = `
                 <div class="form-group">
