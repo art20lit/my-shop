@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админка - Добавить товар</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
+        input, textarea { width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Добавить товар в каталог</h2>
+    <input type="text" id="name" placeholder="Название товара">
+    <textarea id="desc" placeholder="Описание"></textarea>
+    <input type="number" id="price" placeholder="Цена (число)">
+    <input type="text" id="img" placeholder="Ссылка на картинку (URL)">
+    <button onclick="addProduct()">Сохранить товар</button>
+    <div id="status"></div>
+
+    <script type="module">
+        // ВАШ firebaseConfig
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtmwSKze_P9F_4Wkd5ZPD45bGNmDXEQ58",
+            authDomain: "my-shop-22c14.firebaseapp.com",
+            projectId: "my-shop-22c14",
+            storageBucket: "my-shop-22c14.firebasestorage.app",
+            messagingSenderId: "1029158788389",
+            appId: "1:1029158788389:web:01bfc85675c52ae315cecc"
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.addProduct = async function() {
+            const name = document.getElementById('name').value;
+            const desc = document.getElementById('desc').value;
+            const price = Number(document.getElementById('price').value);
+            const img = document.getElementById('img').value;
+            const status = document.getElementById('status');
+
+            if(!name || !price) { status.innerText = "Заполните название и цену"; return; }
+
+            try {
+                await addDoc(collection(db, "products"), {
+                    name: name,
+                    description: desc,
+                    price: price,
+                    imageUrl: img,
+                    createdAt: new Date()
+                });
+                status.innerText = "Товар добавлен!";
+                document.getElementById('name').value = '';
+                document.getElementById('desc').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('img').value = '';
+            } catch (e) {
+                status.innerText = "Ошибка: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

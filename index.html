@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог товаров</title>
+    <!-- Скрипт Telegram Mini App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 15px; background: #f4f4f4; }
+        h1 { text-align: center; font-size: 22px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .card { background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; background: #eee; }
+        .card h3 { margin: 8px 0 4px; font-size: 15px; }
+        .card p { margin: 0 0 6px; font-size: 13px; color: #666; }
+        .price { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 6px; }
+        button { width: 100%; padding: 8px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #999; cursor: default; }
+
+        /* Корзина */
+        #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+        #cart-bar button { width: auto; padding: 8px 16px; background: #28a745; }
+        #cart-bar button:hover { background: #218838; }
+        body { padding-bottom: 70px; }
+
+        /* Модальное окно оформления */
+        #checkout-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; z-index: 10; }
+        #checkout-modal.active { display: flex; }
+        .modal-box { background: white; border-radius: 10px; padding: 20px; width: 100%; max-width: 400px; }
+        .modal-box h2 { margin-top: 0; font-size: 18px; }
+        .modal-box input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        .modal-box .row { display: flex; gap: 10px; }
+        .modal-box .row button { flex: 1; }
+        .cancel-btn { background: #ccc; color: #333; }
+        .cancel-btn:hover { background: #bbb; }
+    </style>
+</head>
+<body>
+    <h1>Наш каталог</h1>
+    <div id="products" class="grid"></div>
+
+    <!-- Панель корзины -->
+    <div id="cart-bar" style="display:none;">
+        <span>Корзина: <b id="cart-count">0</b> — <b id="cart-total">0</b> ₽</span>
+        <button onclick="openCheckout()">Оформить</button>
+    </div>
+
+    <!-- Модальное окно оформления заказа -->
+    <div id="checkout-modal">
+        <div class="modal-box">
+            <h2>Оформление заказа</h2>
+            <input type="text" id="customer-name" placeholder="Ваше имя">
+            <input type="tel" id="customer-phone" placeholder="Ваш телефон">
+            <div class="row">
+                <button class="cancel-btn" onclick="closeCheckout()">Отмена</button>
+                <button onclick="submitOrder()">Заказать</button>
+            </div>
+            <div id="checkout-status" style="margin-top:10px; font-size:14px;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // ВАШ firebaseConfig
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtmwSKze_P9F_4Wkd5ZPD45bGNmDXEQ58",
+            authDomain: "my-shop-22c14.firebaseapp.com",
+            projectId: "my-shop-22c14",
+            storageBucket: "my-shop-22c14.firebasestorage.app",
+            messagingSenderId: "1029158788389",
+            appId: "1:1029158788389:web:01bfc85675c52ae315cecc"
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Анонимный вход, чтобы можно было создавать заказы
+        signInAnonymously(auth).catch(e => console.error("Auth error:", e));
+
+        // Корзина
+        let cart = [];
+
+        function updateCartBar() {
+            const bar = document.getElementById('cart-bar');
+            const countEl = document.getElementById('cart-count');
+            const totalEl = document.getElementById('cart-total');
+            if (cart.length === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+            bar.style.display = 'flex';
+            countEl.innerText = cart.length;
+            totalEl.innerText = cart.reduce((s, i) => s + i.price, 0);
+        }
+
+        // Загрузка товаров
+        async function loadProducts() {
+            const container = document.getElementById('products');
+            try {
+                const snap = await getDocs(collection(db, "products"));
+                if (snap.empty) {
+                    container.innerHTML = '<p style="text-align:center;color:#999;">Товаров пока нет</p>';
+                    return;
+                }
+                snap.forEach((doc) => {
+                    const p = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    const imgSrc = p.imageUrl || 'https://via.placeholder.com/200x120?text=No+image';
+                    card.innerHTML = `
+                        <img src="${imgSrc}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/200x120?text=No+image'">
+                        <h3>${p.name}</h3>
+                        <p>${p.description || ''}</p>
+                        <div class="price">${p.price} ₽</div>
+                        <button>В корзину</button>
+                    `;
+                    card.querySelector('button').addEventListener('click', () => addToCart(doc.id, p.name, p.price));
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                container.innerHTML = '<p style="color:red;text-align:center;">Ошибка загрузки: ' + e.message + '</p>';
+            }
+        }
+
+        function addToCart(id, name, price) {
+            cart.push({ productId: id, name: name, price: price });
+            updateCartBar();
+            // Тактильный отклик в Telegram (если поддерживается)
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        // Модальное окно
+        window.openCheckout = function() {
+            document.getElementById('checkout-modal').classList.add('active');
+        };
+        window.closeCheckout = function() {
+            document.getElementById('checkout-modal').classList.remove('active');
+            document.getElementById('checkout-status').innerText = '';
+        };
+
+        // Отправка заказа
+        window.submitOrder = async function() {
+            const name = document.getElementById('customer-name').value.trim();
+            const phone = document.getElementById('customer-phone').value.trim();
+            const status = document.getElementById('checkout-status');
+
+            if (!name || !phone) {
+                status.style.color = 'red';
+                status.innerText = 'Заполните имя и телефон';
+                return;
+            }
+
+            status.style.color = '#666';
+            status.innerText = 'Отправляем...';
+
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            const customerTelegram = tgUser ? (tgUser.username ? '@' + tgUser.username : tgUser.first_name) : null;
+
+            try {
+                await addDoc(collection(db, "orders"), {
+                    items: cart,
+                    total: total,
+                    customerName: name,
+                    customerPhone: phone,
+                    customerTelegram: customerTelegram,
+                    status: "new",
+                    createdAt: new Date()
+                });
+                status.style.color = 'green';
+                status.innerText = 'Заказ оформлен! Мы свяжемся с вами.';
+                cart = [];
+                updateCartBar();
+                document.getElementById('customer-name').value = '';
+                document.getElementById('customer-phone').value = '';
+                setTimeout(() => closeCheckout(), 1500);
+            } catch (e) {
+                status.style.color = 'red';
+                status.innerText = 'Ошибка: ' + e.message;
+            }
+        };
+
+        loadProducts();
+    </script>
+</body>
+</html>
