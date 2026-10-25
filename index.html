@@ -7,30 +7,27 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #f0ece6;           /* тёплый бежевый фон */
-            --card: #faf8f5;         /* карточки чуть светлее */
-            --text: #3a3632;         /* мягкий тёмно-коричневый */
-            --text-muted: #8a827a;   /* приглушённый */
-            --primary: #6b6259;      /* основной акцент — тёплый серо-коричневый */
-            --primary-soft: #d6cec4; /* мягкий акцент */
+            --bg: #f0ece6;
+            --card: #faf8f5;
+            --text: #3a3632;
+            --text-muted: #8a827a;
+            --primary: #6b6259;
+            --primary-soft: #d6cec4;
             --border: #e0d9d0;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
 
-        /* Шапка */
         .header { padding: 18px 20px 10px; background: var(--bg); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: 0.5px; }
         .header .icon { font-size: 18px; opacity: 0.6; cursor: pointer; }
 
-        /* Категории */
         .container { padding: 0 20px; }
         .categories { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 18px; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
         .category-btn { padding: 7px 14px; background: transparent; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; color: var(--text-muted); transition: 0.25s; }
         .category-btn.active { background: var(--primary); color: #faf8f5; border-color: var(--primary); }
 
-        /* Сетка товаров */
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
         .product-card { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
         .product-card:active { transform: scale(0.98); }
@@ -40,7 +37,6 @@
         .product-card .info .price { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: var(--primary); }
         .product-card .info .sizes { font-size: 11px; color: var(--text-muted); }
 
-        /* Модалки */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(58,54,50,0.35); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--card); width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
@@ -51,7 +47,6 @@
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); }
 
-        /* Карточка товара */
         .product-detail-img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #e8e2da; }
         .product-detail h2 { margin: 0 0 8px; font-size: 19px; font-weight: 500; }
         .product-detail .price { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: var(--primary); }
@@ -63,12 +58,10 @@
         .qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
         .qty-value { font-size: 16px; font-weight: 500; min-width: 24px; text-align: center; }
 
-        /* Кнопки */
         .btn { width: 100%; padding: 15px; border: none; border-radius: 14px; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; letter-spacing: 0.3px; }
         .btn-primary { background: var(--primary); color: #faf8f5; }
         .btn-primary:active { background: #5a534b; }
 
-        /* Корзина */
         .cart-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
         .cart-item img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; background: #e8e2da; }
         .cart-item .info { flex: 1; min-width: 0; }
@@ -78,18 +71,15 @@
         .cart-item .actions { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; }
         .cart-item .remove-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
 
-        /* Форма */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         .form-group input { width: 100%; padding: 13px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; background: var(--bg); color: var(--text); }
 
-        /* Успех */
         .success-screen { text-align: center; padding: 40px 20px; }
         .success-icon { width: 72px; height: 72px; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; margin: 0 auto 20px; }
         .success-screen h2 { margin-bottom: 8px; font-weight: 500; }
         .success-screen p { color: var(--text-muted); margin-bottom: 28px; font-size: 14px; line-height: 1.5; }
 
-        /* Нижняя навигация — минимализм */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 50; }
         .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 20px; border-radius: 12px; transition: 0.2s; position: relative; }
         .nav-item.active { color: var(--primary); }
@@ -99,7 +89,6 @@
 </head>
 <body>
 
-    <!-- ГЛАВНЫЙ ЭКРАН -->
     <div id="main-screen">
         <div class="header">
             <h1>Каталог</h1>
@@ -111,7 +100,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ТОВАР -->
     <div class="modal-overlay" id="product-modal">
         <div class="modal">
             <div class="modal-header">
@@ -123,7 +111,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: КОРЗИНА -->
     <div class="modal-overlay" id="cart-modal">
         <div class="modal">
             <div class="modal-header">
@@ -135,7 +122,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: ОФОРМЛЕНИЕ -->
     <div class="modal-overlay" id="checkout-modal">
         <div class="modal">
             <div class="modal-header">
@@ -159,7 +145,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА: УСПЕХ -->
     <div class="modal-overlay" id="success-modal">
         <div class="modal">
             <div class="modal-body">
@@ -173,7 +158,6 @@
         </div>
     </div>
 
-    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
             <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -213,18 +197,19 @@
         let selectedSize = null;
         let selectedQty = 1;
 
-        async function init() {
-            await loadProducts();
-        }
+        async function init() { await loadProducts(); }
 
         async function loadProducts() {
             const snap = await getDocs(collection(db, "products"));
             allProducts = [];
             snap.forEach(d => {
                 const p = d.data();
-                let urls = p.imageUrls;
-                if (!urls || !Array.isArray(urls) || urls.length === 0) {
-                    urls = p.imageUrl ? [p.imageUrl] : [];
+                // Новое поле images (base64 или URL), либо старые imageUrls / imageUrl
+                let images = p.images;
+                if (!images || !Array.isArray(images) || images.length === 0) {
+                    if (p.imageUrls && Array.isArray(p.imageUrls) && p.imageUrls.length) images = p.imageUrls;
+                    else if (p.imageUrl) images = [p.imageUrl];
+                    else images = [];
                 }
                 allProducts.push({
                     id: d.id,
@@ -233,7 +218,7 @@
                     price: p.price,
                     category: p.category || 'Без категории',
                     sizes: p.sizes || [],
-                    imageUrls: urls
+                    images
                 });
             });
             renderCategories();
@@ -264,7 +249,7 @@
             }
             container.innerHTML = filtered.map(p => `
                 <div class="product-card" onclick="openProduct('${p.id}')">
-                    <img src="${p.imageUrls[0] || 'https://via.placeholder.com/200?text=No'}" alt="${p.name}">
+                    <img src="${p.images[0] || 'https://via.placeholder.com/200?text=No'}" alt="${p.name}">
                     <div class="info">
                         <h3>${p.name}</h3>
                         <div class="price">${p.price} ₽</div>
@@ -283,7 +268,12 @@
             const content = document.getElementById('product-modal-content');
             content.innerHTML = `
                 <div class="product-detail">
-                    <img src="${selectedProduct.imageUrls[0] || 'https://via.placeholder.com/300?text=No'}" class="product-detail-img">
+                    <img src="${selectedProduct.images[0] || 'https://via.placeholder.com/300?text=No'}" class="product-detail-img" id="main-detail-img">
+                    ${selectedProduct.images.length > 1 ? `
+                        <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;">
+                            ${selectedProduct.images.map(img => `<img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="document.getElementById('main-detail-img').src='${img}'">`).join('')}
+                        </div>
+                    ` : ''}
                     <h2>${selectedProduct.name}</h2>
                     <div class="price">${selectedProduct.price} ₽</div>
                     <div class="desc">${selectedProduct.description}</div>
@@ -325,7 +315,7 @@
                 price: selectedProduct.price,
                 size: selectedSize,
                 qty: selectedQty,
-                image: selectedProduct.imageUrls[0] || ''
+                image: selectedProduct.images[0] || ''
             });
             updateCartBadge();
             closeModal('product-modal');
@@ -423,7 +413,7 @@
         window.switchTab = function(tab) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + tab).classList.add('active');
-            if (tab === 'catalog') { /* главный экран */ }
+            if (tab === 'catalog') { /* главный */ }
             else if (tab === 'cart') { renderCart(); document.getElementById('cart-modal').classList.add('active'); }
             else if (tab === 'profile') { alert('Профиль в разработке. Здесь будут ваши заказы.'); }
         };
