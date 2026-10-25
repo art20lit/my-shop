@@ -3,107 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Магазин</title>
+    <title>Каталог</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #f8f9fa;
-            --card: #ffffff;
-            --text: #212529;
-            --text-muted: #6c757d;
-            --primary: #2c3e50;
-            --primary-light: #34495e;
-            --accent: #e1e8ed;
-            --border: #dee2e6;
+            --bg: #f0ece6;           /* тёплый бежевый фон */
+            --card: #faf8f5;         /* карточки чуть светлее */
+            --text: #3a3632;         /* мягкий тёмно-коричневый */
+            --text-muted: #8a827a;   /* приглушённый */
+            --primary: #6b6259;      /* основной акцент — тёплый серо-коричневый */
+            --primary-soft: #d6cec4; /* мягкий акцент */
+            --border: #e0d9d0;
         }
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 70px; }
-        
-        /* Шапка */
-        .header { padding: 15px 20px; background: var(--card); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
-        .header .icon { font-size: 20px; cursor: pointer; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
 
-        /* Главный экран */
-        .container { padding: 15px 20px; }
-        .banner { background: #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
-        .banner h2 { margin: 0 0 10px; font-size: 18px; }
-        .banner p { margin: 0; font-size: 14px; color: var(--text-muted); }
+        /* Шапка */
+        .header { padding: 18px 20px 10px; background: var(--bg); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: 0.5px; }
+        .header .icon { font-size: 18px; opacity: 0.6; cursor: pointer; }
 
         /* Категории */
-        .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; scrollbar-width: none; }
+        .container { padding: 0 20px; }
+        .categories { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 18px; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
-        .category-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
-        .category-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .category-btn { padding: 7px 14px; background: transparent; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; color: var(--text-muted); transition: 0.25s; }
+        .category-btn.active { background: var(--primary); color: #faf8f5; border-color: var(--primary); }
 
         /* Сетка товаров */
-        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .product-card { background: var(--card); border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .product-card { background: var(--card); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
         .product-card:active { transform: scale(0.98); }
-        .product-card img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
-        .product-card .info { padding: 10px; }
-        .product-card .info h3 { margin: 0 0 5px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .product-card .info .price { font-weight: 600; font-size: 15px; margin-bottom: 5px; }
-        .product-card .info .sizes { font-size: 12px; color: var(--text-muted); }
+        .product-card img { width: 100%; height: 170px; object-fit: cover; background: #e8e2da; }
+        .product-card .info { padding: 12px; }
+        .product-card .info h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-card .info .price { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: var(--primary); }
+        .product-card .info .sizes { font-size: 11px; color: var(--text-muted); }
 
-        /* Модальные окна */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-end; justify-content: center; }
+        /* Модалки */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(58,54,50,0.35); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--card); width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; max-height: 90vh; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .modal-header h2 { margin: 0; font-size: 18px; }
-        .modal-header .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .modal-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .modal-header h2 { margin: 0; font-size: 17px; font-weight: 500; }
+        .modal-header .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0; }
         .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); }
 
-        /* Карточка товара (внутри модалки) */
-        .product-detail-img { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
-        .product-detail h2 { margin: 0 0 10px; font-size: 20px; }
-        .product-detail .price { font-size: 22px; font-weight: 700; margin-bottom: 15px; }
+        /* Карточка товара */
+        .product-detail-img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #e8e2da; }
+        .product-detail h2 { margin: 0 0 8px; font-size: 19px; font-weight: 500; }
+        .product-detail .price { font-size: 20px; font-weight: 600; margin-bottom: 14px; color: var(--primary); }
         .product-detail .desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-        .size-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        .size-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; }
-        .size-btn.active { border-color: var(--primary); background: var(--primary); color: white; }
-        .qty-control { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .qty-value { font-size: 18px; font-weight: 600; min-width: 30px; text-align: center; }
+        .size-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .size-btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: transparent; cursor: pointer; font-size: 14px; color: var(--text); }
+        .size-btn.active { border-color: var(--primary); background: var(--primary); color: #faf8f5; }
+        .qty-control { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
+        .qty-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
+        .qty-value { font-size: 16px; font-weight: 500; min-width: 24px; text-align: center; }
 
         /* Кнопки */
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:active { background: var(--primary-light); }
-        .btn-secondary { background: var(--accent); color: var(--text); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 14px; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; letter-spacing: 0.3px; }
+        .btn-primary { background: var(--primary); color: #faf8f5; }
+        .btn-primary:active { background: #5a534b; }
 
         /* Корзина */
-        .cart-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--border); }
-        .cart-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; background: #eee; }
-        .cart-item .info { flex: 1; }
-        .cart-item .info h4 { margin: 0 0 5px; font-size: 15px; }
-        .cart-item .info .meta { font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
-        .cart-item .info .price { font-weight: 600; }
+        .cart-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .cart-item img { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; background: #e8e2da; }
+        .cart-item .info { flex: 1; min-width: 0; }
+        .cart-item .info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 500; }
+        .cart-item .info .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .cart-item .info .price { font-weight: 600; font-size: 14px; color: var(--primary); }
         .cart-item .actions { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; }
-        .cart-item .remove-btn { background: none; border: none; color: #dc3545; font-size: 13px; cursor: pointer; }
+        .cart-item .remove-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
 
-        /* Оформление заказа */
+        /* Форма */
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input { width: 100%; padding: 13px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; background: var(--bg); color: var(--text); }
 
         /* Успех */
         .success-screen { text-align: center; padding: 40px 20px; }
-        .success-icon { width: 80px; height: 80px; background: #d4edda; color: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; }
-        .success-screen h2 { margin-bottom: 10px; }
-        .success-screen p { color: var(--text-muted); margin-bottom: 30px; }
+        .success-icon { width: 72px; height: 72px; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; margin: 0 auto 20px; }
+        .success-screen h2 { margin-bottom: 8px; font-weight: 500; }
+        .success-screen p { color: var(--text-muted); margin-bottom: 28px; font-size: 14px; line-height: 1.5; }
 
-        /* Нижняя навигация */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: var(--text-muted); font-size: 11px; }
+        /* Нижняя навигация — минимализм */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 50; }
+        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 20px; border-radius: 12px; transition: 0.2s; position: relative; }
         .nav-item.active { color: var(--primary); }
-        .nav-item .icon { font-size: 20px; }
-
-        .badge { background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; position: absolute; top: -5px; right: -5px; font-weight: bold; }
-        .cart-icon-wrapper { position: relative; display: inline-block; }
+        .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .badge { background: var(--primary); color: #faf8f5; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -112,19 +103,15 @@
     <div id="main-screen">
         <div class="header">
             <h1>Каталог</h1>
-            <div class="icon" onclick="alert('Поиск пока в разработке')">🔍</div>
+            <div class="icon" onclick="alert('Поиск в разработке')">🔍</div>
         </div>
         <div class="container">
-            <div class="banner">
-                <h2>Новая коллекция</h2>
-                <p>Скидки до 30% на все!</p>
-            </div>
             <div class="categories" id="categories-container"></div>
             <div class="products-grid" id="products-grid"></div>
         </div>
     </div>
 
-    <!-- МОДАЛКА: КАРТОЧКА ТОВАРА -->
+    <!-- МОДАЛКА: ТОВАР -->
     <div class="modal-overlay" id="product-modal">
         <div class="modal">
             <div class="modal-header">
@@ -132,6 +119,7 @@
                 <button class="close-btn" onclick="closeModal('product-modal')">×</button>
             </div>
             <div class="modal-body" id="product-modal-content"></div>
+            <div class="modal-footer" id="product-modal-footer"></div>
         </div>
     </div>
 
@@ -151,22 +139,22 @@
     <div class="modal-overlay" id="checkout-modal">
         <div class="modal">
             <div class="modal-header">
-                <h2>Оформление заказа</h2>
+                <h2>Оформление</h2>
                 <button class="close-btn" onclick="closeModal('checkout-modal')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Ваше имя</label>
+                    <label>Имя</label>
                     <input type="text" id="customer-name" placeholder="Иван Иванов">
                 </div>
                 <div class="form-group">
                     <label>Телефон</label>
                     <input type="tel" id="customer-phone" placeholder="+7 (999) 123-45-67">
                 </div>
-                <div id="checkout-status" style="color: #dc3545; font-size: 14px; margin-bottom: 10px;"></div>
+                <div id="checkout-status" style="color: #b85c5c; font-size: 13px;"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="submitOrder()">Подтвердить заказ</button>
+                <button class="btn btn-primary" onclick="submitOrder()">Подтвердить</button>
             </div>
         </div>
     </div>
@@ -177,7 +165,7 @@
             <div class="modal-body">
                 <div class="success-screen">
                     <div class="success-icon">✓</div>
-                    <h2>Заказ оформлен!</h2>
+                    <h2>Заказ оформлен</h2>
                     <p>Мы свяжемся с вами в ближайшее время для подтверждения.</p>
                     <button class="btn btn-primary" onclick="closeModal('success-modal'); switchTab('catalog');">Вернуться в каталог</button>
                 </div>
@@ -188,19 +176,14 @@
     <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
-            <div class="icon">🏠</div>
-            <div>Каталог</div>
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
         </div>
-        <div class="nav-item" id="nav-cart" onclick="switchTab('cart')">
-            <div class="cart-icon-wrapper">
-                <div class="icon">🛒</div>
-                <span class="badge" id="nav-cart-badge" style="display:none;">0</span>
-            </div>
-            <div>Корзина</div>
+        <div class="nav-item" id="nav-cart" onclick="switchTab('cart')" style="position:relative;">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            <span class="badge" id="nav-cart-badge" style="display:none;">0</span>
         </div>
         <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
-            <div class="icon">👤</div>
-            <div>Профиль</div>
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </div>
     </div>
 
@@ -230,7 +213,6 @@
         let selectedSize = null;
         let selectedQty = 1;
 
-        // === ИНИЦИАЛИЗАЦИЯ ===
         async function init() {
             await loadProducts();
         }
@@ -262,7 +244,7 @@
             const cats = [...new Set(allProducts.map(p => p.category))].sort();
             const container = document.getElementById('categories-container');
             container.innerHTML = `<button class="category-btn active" onclick="filterCategory('')">Все</button>` +
-                cats.map(c => `<button class="category-btn" onclick="filterCategory('${c}')">${c}</button>`).join('');
+                cats.map(c => `<button class="category-btn" onclick="filterCategory('${c.replace(/'/g, "\\'")}')">${c}</button>`).join('');
         }
 
         window.filterCategory = function(cat) {
@@ -276,29 +258,25 @@
         function renderProducts() {
             const container = document.getElementById('products-grid');
             const filtered = allProducts.filter(p => !currentCategory || p.category === currentCategory);
-            
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">Товаров нет</p>';
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">Товаров нет</p>';
                 return;
             }
-
             container.innerHTML = filtered.map(p => `
                 <div class="product-card" onclick="openProduct('${p.id}')">
                     <img src="${p.imageUrls[0] || 'https://via.placeholder.com/200?text=No'}" alt="${p.name}">
                     <div class="info">
                         <h3>${p.name}</h3>
                         <div class="price">${p.price} ₽</div>
-                        <div class="sizes">${p.sizes.length ? 'Размеры: ' + p.sizes.join(', ') : ''}</div>
+                        <div class="sizes">${p.sizes.length ? p.sizes.join(' · ') : ''}</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // === КАРТОЧКА ТОВАРА ===
         window.openProduct = function(id) {
             selectedProduct = allProducts.find(p => p.id === id);
             if (!selectedProduct) return;
-            
             selectedSize = selectedProduct.sizes.length > 0 ? selectedProduct.sizes[0] : null;
             selectedQty = 1;
 
@@ -309,23 +287,21 @@
                     <h2>${selectedProduct.name}</h2>
                     <div class="price">${selectedProduct.price} ₽</div>
                     <div class="desc">${selectedProduct.description}</div>
-                    
                     ${selectedProduct.sizes.length > 0 ? `
-                    <div style="margin-bottom: 10px; font-weight: 600;">Размер:</div>
-                    <div class="size-selector" id="size-selector">
-                        ${selectedProduct.sizes.map(s => `<button class="size-btn ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${s}')">${s}</button>`).join('')}
-                    </div>
+                        <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Размер</div>
+                        <div class="size-selector" id="size-selector">
+                            ${selectedProduct.sizes.map(s => `<button class="size-btn ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${s}')">${s}</button>`).join('')}
+                        </div>
                     ` : ''}
-
-                    <div style="margin-bottom: 10px; font-weight: 600;">Количество:</div>
+                    <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Количество</div>
                     <div class="qty-control">
-                        <button class="qty-btn" onclick="changeQty(-1)">-</button>
+                        <button class="qty-btn" onclick="changeQty(-1)">−</button>
                         <div class="qty-value" id="qty-display">1</div>
                         <button class="qty-btn" onclick="changeQty(1)">+</button>
                     </div>
                 </div>
             `;
-            
+            document.getElementById('product-modal-footer').innerHTML = `<button class="btn btn-primary" onclick="addToCartFromModal()">Добавить в корзину</button>`;
             document.getElementById('product-modal').classList.add('active');
         };
 
@@ -341,26 +317,6 @@
             document.getElementById('qty-display').innerText = selectedQty;
         };
 
-        // Добавляем кнопку "В корзину" в футер модалки товара (динамически)
-        document.getElementById('product-modal').addEventListener('click', function(e) {
-            if (e.target.classList.contains('modal-overlay')) closeModal('product-modal');
-        });
-
-        // Переопределяем закрытие, чтобы добавить кнопку в футер перед закрытием
-        const originalOpenProduct = window.openProduct;
-        window.openProduct = function(id) {
-            originalOpenProduct(id);
-            // Добавляем футер с кнопкой
-            const modal = document.querySelector('#product-modal .modal');
-            let footer = modal.querySelector('.modal-footer');
-            if (!footer) {
-                footer = document.createElement('div');
-                footer.className = 'modal-footer';
-                modal.appendChild(footer);
-            }
-            footer.innerHTML = `<button class="btn btn-primary" onclick="addToCartFromModal()">Добавить в корзину</button>`;
-        };
-
         window.addToCartFromModal = function() {
             if (!selectedProduct) return;
             cart.push({
@@ -373,34 +329,26 @@
             });
             updateCartBadge();
             closeModal('product-modal');
-            // Легкая вибрация
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
         };
 
-        // === КОРЗИНА ===
         function updateCartBadge() {
             const badge = document.getElementById('nav-cart-badge');
             const count = cart.reduce((s, i) => s + i.qty, 0);
-            if (count > 0) {
-                badge.style.display = 'block';
-                badge.innerText = count;
-            } else {
-                badge.style.display = 'none';
-            }
+            if (count > 0) { badge.style.display = 'block'; badge.innerText = count; }
+            else { badge.style.display = 'none'; }
         }
 
         window.renderCart = function() {
             const content = document.getElementById('cart-modal-content');
             const footer = document.getElementById('cart-modal-footer');
-            
             if (cart.length === 0) {
-                content.innerHTML = '<p style="text-align:center; color:#999; padding: 40px 0;">Корзина пуста</p>';
+                content.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px 0;">Корзина пуста</p>';
                 footer.innerHTML = '';
                 return;
             }
-
             content.innerHTML = cart.map((item, index) => `
                 <div class="cart-item">
                     <img src="${item.image || 'https://via.placeholder.com/80?text=No'}">
@@ -410,42 +358,32 @@
                         <div class="price">${item.price} ₽</div>
                     </div>
                     <div class="actions">
-                        <button class="remove-btn" onclick="removeFromCart(${index})">Удалить</button>
+                        <button class="remove-btn" onclick="removeFromCart(${index})">удалить</button>
                         <div class="qty-control" style="margin:0; gap: 8px;">
-                            <button class="qty-btn" style="width:28px;height:28px;font-size:16px;" onclick="changeCartQty(${index}, -1)">-</button>
-                            <span class="qty-value" style="font-size:14px;">${item.qty}</span>
-                            <button class="qty-btn" style="width:28px;height:28px;font-size:16px;" onclick="changeCartQty(${index}, 1)">+</button>
+                            <button class="qty-btn" style="width:28px;height:28px;font-size:15px;" onclick="changeCartQty(${index}, -1)">−</button>
+                            <span class="qty-value" style="font-size:13px;">${item.qty}</span>
+                            <button class="qty-btn" style="width:28px;height:28px;font-size:15px;" onclick="changeCartQty(${index}, 1)">+</button>
                         </div>
                     </div>
                 </div>
             `).join('');
-
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             footer.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom: 15px; font-size: 18px; font-weight: 600;">
-                    <span>Итого:</span>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 14px; font-size: 16px; font-weight: 500;">
+                    <span style="color: var(--text-muted);">Итого</span>
                     <span>${total} ₽</span>
                 </div>
                 <button class="btn btn-primary" onclick="openCheckout()">Оформить заказ</button>
             `;
         };
 
-        window.removeFromCart = function(index) {
-            cart.splice(index, 1);
-            updateCartBadge();
-            renderCart();
-        };
-
+        window.removeFromCart = function(index) { cart.splice(index, 1); updateCartBadge(); renderCart(); };
         window.changeCartQty = function(index, delta) {
             cart[index].qty += delta;
-            if (cart[index].qty <= 0) {
-                cart.splice(index, 1);
-            }
-            updateCartBadge();
-            renderCart();
+            if (cart[index].qty <= 0) cart.splice(index, 1);
+            updateCartBadge(); renderCart();
         };
 
-        // === ОФОРМЛЕНИЕ ===
         window.openCheckout = function() {
             closeModal('cart-modal');
             document.getElementById('checkout-modal').classList.add('active');
@@ -455,69 +393,43 @@
             const name = document.getElementById('customer-name').value.trim();
             const phone = document.getElementById('customer-phone').value.trim();
             const status = document.getElementById('checkout-status');
-
-            if (!name || !phone) {
-                status.innerText = 'Заполните имя и телефон';
-                return;
-            }
-
+            if (!name || !phone) { status.innerText = 'Заполните имя и телефон'; return; }
+            status.style.color = 'var(--text-muted)';
             status.innerText = 'Отправляем...';
-            status.style.color = '#666';
-
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
             const customerTelegram = tgUser ? (tgUser.username ? '@' + tgUser.username : tgUser.first_name) : null;
-
             try {
                 await addDoc(collection(db, "orders"), {
-                    items: cart,
-                    total: total,
-                    customerName: name,
-                    customerPhone: phone,
-                    customerTelegram: customerTelegram,
-                    status: "new",
-                    createdAt: new Date()
+                    items: cart, total, customerName: name, customerPhone: phone,
+                    customerTelegram, status: "new", createdAt: new Date()
                 });
-                
                 cart = [];
                 updateCartBadge();
                 document.getElementById('customer-name').value = '';
                 document.getElementById('customer-phone').value = '';
                 status.innerText = '';
-                
                 closeModal('checkout-modal');
                 document.getElementById('success-modal').classList.add('active');
-                
-                // Обновляем заголовок вкладки если в Telegram
                 if (window.Telegram?.WebApp?.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
                 }
             } catch (e) {
-                status.style.color = '#dc3545';
+                status.style.color = '#b85c5c';
                 status.innerText = 'Ошибка: ' + e.message;
             }
         };
 
-        // === НАВИГАЦИЯ И УТИЛИТЫ ===
         window.switchTab = function(tab) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + tab).classList.add('active');
-
-            if (tab === 'catalog') {
-                // Уже на главном
-            } else if (tab === 'cart') {
-                renderCart();
-                document.getElementById('cart-modal').classList.add('active');
-            } else if (tab === 'profile') {
-                alert('Профиль в разработке. Здесь будут ваши заказы.');
-            }
+            if (tab === 'catalog') { /* главный экран */ }
+            else if (tab === 'cart') { renderCart(); document.getElementById('cart-modal').classList.add('active'); }
+            else if (tab === 'profile') { alert('Профиль в разработке. Здесь будут ваши заказы.'); }
         };
 
-        window.closeModal = function(id) {
-            document.getElementById(id).classList.remove('active');
-        };
+        window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
 
-        // Закрытие по клику на оверлей
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) {
                 if (e.target === overlay) closeModal(overlay.id);
