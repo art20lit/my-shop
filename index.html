@@ -83,7 +83,6 @@
         .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
         .badge { background: var(--primary); color: #faf8f5; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
 
-        /* Профиль */
         .profile-name { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
         .profile-username { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
         .profile-section-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
@@ -97,7 +96,6 @@
         .order-history-item .oh-items { font-size: 13px; line-height: 1.5; margin-bottom: 6px; }
         .order-history-item .oh-total { font-weight: 600; font-size: 14px; color: var(--primary); }
         .meeting-box { background: var(--primary-soft); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.5; }
-        .meeting-box b { color: var(--text); }
         .empty-state { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 14px; }
     </style>
 </head>
@@ -114,7 +112,6 @@
         </div>
     </div>
 
-    <!-- ТОВАР -->
     <div class="modal-overlay" id="product-modal">
         <div class="modal">
             <div class="modal-header">
@@ -126,7 +123,6 @@
         </div>
     </div>
 
-    <!-- КОРЗИНА -->
     <div class="modal-overlay" id="cart-modal">
         <div class="modal">
             <div class="modal-header">
@@ -138,7 +134,6 @@
         </div>
     </div>
 
-    <!-- ОФОРМЛЕНИЕ -->
     <div class="modal-overlay" id="checkout-modal">
         <div class="modal">
             <div class="modal-header">
@@ -162,7 +157,6 @@
         </div>
     </div>
 
-    <!-- УСПЕХ -->
     <div class="modal-overlay" id="success-modal">
         <div class="modal">
             <div class="modal-body">
@@ -176,7 +170,6 @@
         </div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div class="modal-overlay" id="profile-modal">
         <div class="modal">
             <div class="modal-header">
@@ -189,7 +182,6 @@
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-catalog" onclick="switchTab('catalog')">
             <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -214,7 +206,7 @@
         };
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const app = initializeApp(firebaseConfig);
@@ -222,23 +214,36 @@
         const auth = getAuth(app);
         signInAnonymously(auth).catch(e => console.error("Auth error:", e));
 
+        // Единый словарь статусов
+        const STATUSES = {
+            new:        { text: 'Новый',               color: '#b85c5c' },
+            accepted:   { text: 'Принято',             color: '#c98a5a' },
+            processing: { text: 'Взят в обработку',    color: '#c9a05a' },
+            delivery:   { text: 'В процессе доставки', color: '#6b8aa0' },
+            done:       { text: 'Завершён',            color: '#6b8e6b' },
+            cancelled:  { text: 'Отказ',               color: '#8a827a' }
+        };
+        function normalizeStatus(s) {
+            if (!s) return 'new';
+            if (s === 'work') return 'processing';
+            if (STATUSES[s]) return s;
+            return 'new';
+        }
+
         let allProducts = [];
         let cart = [];
         let currentCategory = '';
         let selectedProduct = null;
         let selectedSize = null;
         let selectedQty = 1;
-        let tgUser = null;
+        let tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
         let currentProfile = null;
-
-        // Telegram user
-        tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+        let unsubProfile = null;
+        let unsubOrders = null;
 
         async function init() {
             await loadProducts();
-            if (tgUser && tgUser.id) {
-                await loadProfile();
-            }
+            if (tgUser && tgUser.id) await loadProfile();
         }
 
         // ===== ПРОФИЛЬ =====
@@ -246,18 +251,9 @@
             try {
                 const ref = doc(db, "profiles", String(tgUser.id));
                 const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    currentProfile = snap.data();
-                } else {
-                    // Создаём пустой профиль с именем из Telegram
-                    currentProfile = {
-                        name: tgUser.first_name || '',
-                        phone: '',
-                        telegramUsername: tgUser.username || ''
-                    };
-                }
+                if (snap.exists()) currentProfile = snap.data();
+                else currentProfile = { name: tgUser.first_name || '', phone: '', telegramUsername: tgUser.username || '' };
             } catch (e) {
-                console.error("Profile load error:", e);
                 currentProfile = { name: tgUser.first_name || '', phone: '' };
             }
         }
@@ -265,11 +261,7 @@
         async function saveProfile(name, phone) {
             if (!tgUser || !tgUser.id) return;
             const ref = doc(db, "profiles", String(tgUser.id));
-            await setDoc(ref, {
-                name, phone,
-                telegramUsername: tgUser.username || '',
-                updatedAt: new Date()
-            }, { merge: true });
+            await setDoc(ref, { name, phone, telegramUsername: tgUser.username || '', updatedAt: new Date() }, { merge: true });
             currentProfile = { name, phone, telegramUsername: tgUser.username || '' };
         }
 
@@ -442,7 +434,6 @@
 
         window.openCheckout = function() {
             closeModal('cart-modal');
-            // Подставляем профиль
             if (currentProfile) {
                 document.getElementById('customer-name').value = currentProfile.name || '';
                 document.getElementById('customer-phone').value = currentProfile.phone || '';
@@ -460,7 +451,6 @@
             const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const customerTelegram = tgUser ? (tgUser.username ? '@' + tgUser.username : tgUser.first_name) : null;
             const customerTelegramId = tgUser ? String(tgUser.id) : null;
-
             try {
                 await addDoc(collection(db, "orders"), {
                     items: cart, total, customerName: name, customerPhone: phone,
@@ -468,10 +458,7 @@
                     meetingAddress: '', meetingTime: '',
                     status: "new", createdAt: new Date()
                 });
-                // Сохраняем профиль
-                if (tgUser && tgUser.id) {
-                    await saveProfile(name, phone);
-                }
+                if (tgUser && tgUser.id) await saveProfile(name, phone);
                 cart = [];
                 updateCartBadge();
                 document.getElementById('customer-name').value = '';
@@ -488,7 +475,7 @@
             }
         };
 
-        // ===== ПРОФИЛЬ ЭКРАН =====
+        // ===== ПРОФИЛЬ ЭКРАН (с реальным временем) =====
         async function renderProfile() {
             const content = document.getElementById('profile-content');
             if (!tgUser || !tgUser.id) {
@@ -497,33 +484,36 @@
             }
             if (!currentProfile) await loadProfile();
 
-            let orders = [];
-            try {
-                const q = query(collection(db, "orders"), where("customerTelegramId", "==", String(tgUser.id)));
-                const snap = await getDocs(q);
+            // Отписываемся от старых слушателей
+            if (unsubOrders) { unsubOrders(); unsubOrders = null; }
+
+            content.innerHTML = `
+                <div class="profile-name">${currentProfile.name || 'Без имени'}</div>
+                <div class="profile-username">${currentProfile.telegramUsername ? '@' + currentProfile.telegramUsername : (tgUser.first_name || '')}</div>
+                <div class="profile-field">
+                    <span class="label">Телефон</span>
+                    <span class="value" id="profile-phone">${currentProfile.phone || 'не указан'}</span>
+                </div>
+                <button class="btn-small" style="margin-top: 12px;" onclick="openEditProfile()">Изменить имя и телефон</button>
+                <div class="profile-section-title">Мои заказы</div>
+                <div id="orders-history-container"><p class="empty-state">Загрузка...</p></div>
+            `;
+
+            // Подписка в реальном времени на заказы клиента
+            const q = query(collection(db, "orders"), where("customerTelegramId", "==", String(tgUser.id)));
+            unsubOrders = onSnapshot(q, (snap) => {
+                const orders = [];
                 snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
                 orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            } catch (e) {
-                console.error("Orders load error:", e);
-            }
-
-            const ordersHtml = orders.length === 0
-                ? '<p class="empty-state">Заказов пока нет</p>'
-                : orders.map(o => {
-                    // Единый словарь статусов (тот же, что в админке)
-const STATUSES = {
-    new:        { text: 'Новый',               color: '#b85c5c' },
-    accepted:   { text: 'Принято',             color: '#c98a5a' },
-    processing: { text: 'Взят в обработку',    color: '#c9a05a' },
-    delivery:   { text: 'В процессе доставки', color: '#6b8aa0' },
-    done:       { text: 'Завершён',            color: '#6b8e6b' },
-    cancelled:  { text: 'Отказ',               color: '#8a827a' }
-};
-let st = o.status || 'new';
-if (st === 'work') st = 'processing'; // совместимость
-if (!STATUSES[st]) st = 'new';
-const statusText = STATUSES[st].text;
-const statusColor = STATUSES[st].color;
+                const container = document.getElementById('orders-history-container');
+                if (!container) return;
+                if (orders.length === 0) {
+                    container.innerHTML = '<p class="empty-state">Заказов пока нет</p>';
+                    return;
+                }
+                container.innerHTML = orders.map(o => {
+                    const st = normalizeStatus(o.status);
+                    const stInfo = STATUSES[st];
                     const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
                     const itemsHtml = (o.items || []).map(i => {
                         let line = `${i.name}`;
@@ -541,7 +531,7 @@ const statusColor = STATUSES[st].color;
                         <div class="order-history-item">
                             <div class="oh-header">
                                 <div class="oh-date">${date}</div>
-                                <div class="oh-status" style="background:${statusColor};">${statusText}</div>
+                                <div class="oh-status" style="background:${stInfo.color};">${stInfo.text}</div>
                             </div>
                             <div class="oh-items">${itemsHtml}</div>
                             <div class="oh-total">Итого: ${o.total} ₽</div>
@@ -549,23 +539,16 @@ const statusColor = STATUSES[st].color;
                         </div>
                     `;
                 }).join('');
-
-            content.innerHTML = `
-                <div class="profile-name">${currentProfile.name || 'Без имени'}</div>
-                <div class="profile-username">${currentProfile.telegramUsername ? '@' + currentProfile.telegramUsername : (tgUser.first_name || '')}</div>
-                <div class="profile-field">
-                    <span class="label">Телефон</span>
-                    <span class="value">${currentProfile.phone || 'не указан'}</span>
-                </div>
-                <button class="btn-small" style="margin-top: 12px;" onclick="openEditProfile()">Изменить имя и телефон</button>
-
-                <div class="profile-section-title">Мои заказы</div>
-                ${ordersHtml}
-            `;
+            }, (err) => {
+                const container = document.getElementById('orders-history-container');
+                if (container) container.innerHTML = '<p class="empty-state" style="color:var(--danger);">Ошибка: ' + err.message + '</p>';
+            });
         }
 
         window.openEditProfile = function() {
             const content = document.getElementById('profile-content');
+            // Отписываемся от заказов, пока редактируем
+            if (unsubOrders) { unsubOrders(); unsubOrders = null; }
             content.innerHTML = `
                 <div class="form-group">
                     <label>Имя</label>
@@ -593,12 +576,12 @@ const statusColor = STATUSES[st].color;
             }
         };
 
-        // ===== НАВИГАЦИЯ =====
         window.switchTab = function(tab) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('nav-' + tab).classList.add('active');
             if (tab === 'catalog') {
                 closeModal('profile-modal');
+                if (unsubOrders) { unsubOrders(); unsubOrders = null; }
             } else if (tab === 'cart') {
                 renderCart();
                 document.getElementById('cart-modal').classList.add('active');
@@ -609,7 +592,10 @@ const statusColor = STATUSES[st].color;
             }
         };
 
-        window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.remove('active');
+            if (id === 'profile-modal' && unsubOrders) { unsubOrders(); unsubOrders = null; }
+        };
 
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) {
