@@ -6,20 +6,10 @@
     <title>Админ-панель</title>
     <style>
         :root {
-            --bg: #eaf2fb;              /* светло-голубой фон */
-            --card: #f7fbff;            /* почти белый с голубым */
-            --text: #1e2a3a;            /* тёмно-синий текст */
-            --text-muted: #6b7c93;      /* серо-голубой */
-            --primary: #2a6fb0;         /* насыщенный синий */
-            --primary-soft: #bcd6f0;    /* светло-голубой */
-            --border: #d0e0f0;          /* голубая обводка */
-            --danger: #c05c5c;
-            --warning: #c9a05a;
-            --success: #4a8c6b;
-            --accepted: #c98a5a;
-            --processing: #c9a05a;
-            --delivery: #4a7fa0;
-            --cancelled: #8a827a;
+            --bg: #eaf2fb; --card: #f7fbff; --text: #1e2a3a; --text-muted: #6b7c93;
+            --primary: #2a6fb0; --primary-soft: #bcd6f0; --border: #d0e0f0;
+            --danger: #c05c5c; --warning: #c9a05a; --success: #4a8c6b;
+            --accepted: #c98a5a; --processing: #c9a05a; --delivery: #4a7fa0; --cancelled: #8a827a;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 70px; }
@@ -92,17 +82,17 @@
         .filter-row select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--card); color: var(--text); }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 50; }
-        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 16px; border-radius: 12px; transition: 0.2s; position: relative; }
+        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 12px; border-radius: 12px; transition: 0.2s; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-        .nav-badge { background: var(--danger); color: white; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 8px; font-weight: 600; }
+        .nav-badge { background: var(--danger); color: white; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 4px; font-weight: 600; }
 
         .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
 
         .upload-btn { background: var(--primary-soft); color: var(--text); padding: 12px; border-radius: 12px; border: none; font-size: 14px; cursor: pointer; width: 100%; }
         .preview-imgs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .preview-imgs .img-wrap { position: relative; }
-        .preview-imgs img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
+        .preview-imgs img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
         .preview-imgs .del-img { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--danger); color: white; border: none; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
         .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
@@ -115,6 +105,17 @@
         .order-item-name { font-size:13px; font-weight:500; line-height:1.3; }
         .order-item-meta { font-size:11px; color:var(--text-muted); margin-top:2px; }
         .order-item-price { font-size:13px; font-weight:600; color:var(--primary); flex-shrink:0; }
+
+        .stock-check { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--card); border-radius: 12px; cursor: pointer; }
+        .stock-check input { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
+        .stock-check span { font-size: 14px; }
+
+        .waitlist-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
+        .waitlist-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background: #d8e6f5; flex-shrink: 0; }
+        .waitlist-item .info { flex: 1; min-width: 0; }
+        .waitlist-item .info h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; }
+        .waitlist-item .info .meta { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        .waitlist-item .del-btn { background: none; border: none; color: var(--danger); font-size: 12px; cursor: pointer; text-decoration: underline; flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -132,7 +133,7 @@
         <span class="live-badge" id="live-badge" style="display:none;">LIVE</span>
     </div>
 
-    <!-- АКТИВНЫЕ ЗАКАЗЫ -->
+    <!-- АКТИВНЫЕ -->
     <div id="tab-orders" class="tab-content active container">
         <div class="filter-row">
             <select id="order-filter" onchange="renderOrders()">
@@ -148,7 +149,7 @@
 
     <!-- ИСТОРИЯ -->
     <div id="tab-history" class="tab-content container">
-        <div class="history-note">Здесь заказы со статусами «Завершён» и «Отказ». Их можно удалить.</div>
+        <div class="history-note">Заказы со статусами «Завершён» и «Отказ».</div>
         <div class="filter-row">
             <select id="history-filter" onchange="renderHistory()">
                 <option value="">Все завершённые</option>
@@ -157,6 +158,12 @@
             </select>
         </div>
         <div id="history-list"></div>
+    </div>
+
+    <!-- ОЖИДАЮТ -->
+    <div id="tab-waitlist" class="tab-content container">
+        <div class="history-note">Клиенты, которые ждут появления товара. Когда товар придёт — свяжитесь и удалите запись.</div>
+        <div id="waitlist-list"></div>
     </div>
 
     <!-- ТОВАРЫ -->
@@ -176,25 +183,25 @@
             <textarea id="f-desc" placeholder="Материал, особенности..."></textarea>
         </div>
         <div class="form-row">
-            <div class="form-group">
-                <label>Цена (₽)</label>
-                <input type="number" id="f-price" placeholder="4900">
-            </div>
-            <div class="form-group">
-                <label>Категория</label>
-                <input type="text" id="f-category" placeholder="Свитеры">
-            </div>
+            <div class="form-group"><label>Цена (₽)</label><input type="number" id="f-price" placeholder="4900"></div>
+            <div class="form-group"><label>Категория</label><input type="text" id="f-category" placeholder="Свитеры"></div>
         </div>
         <div class="form-group">
             <label>Размеры (через запятую)</label>
             <input type="text" id="f-sizes" placeholder="S, M, L, XL">
         </div>
         <div class="form-group">
-            <label>Фотографии (до 3 шт.)</label>
+            <label class="stock-check">
+                <input type="checkbox" id="f-instock" checked>
+                <span>В наличии</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label>Фотографии (до 7 шт.)</label>
             <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoSelect(event)">
             <button type="button" class="upload-btn" onclick="document.getElementById('photo-input').click()">📷 Выбрать фото с телефона</button>
             <div class="preview-imgs" id="preview-imgs"></div>
-            <div class="hint" id="photo-hint">Каждое фото сжимается до ~300 КБ.</div>
+            <div class="hint" id="photo-hint">До 7 фото, каждое сжимается до ~100–150 КБ.</div>
         </div>
         <div id="form-status" class="status-msg"></div>
         <div style="display:flex; gap:10px; margin-top: 16px;">
@@ -211,6 +218,10 @@
         </div>
         <div class="nav-item" id="nav-history" onclick="switchTab('history')">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="nav-item" id="nav-waitlist" onclick="switchTab('waitlist')" style="position:relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="nav-badge" id="waitlist-badge" style="display:none;">0</span>
         </div>
         <div class="nav-item" id="nav-products" onclick="switchTab('products')">
             <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
@@ -246,7 +257,6 @@
         done:       { text: 'Завершён',            cls: 'status-done' },
         cancelled:  { text: 'Отказ',               cls: 'status-cancelled' }
     };
-
     function normalizeStatus(s) {
         if (!s) return 'new';
         if (s === 'work') return 'processing';
@@ -256,15 +266,17 @@
 
     let allProducts = [];
     let allOrders = [];
+    let allWaitlist = [];
     let editingId = null;
     let currentImages = [];
     let knownOrderIds = new Set();
     let firstOrdersLoad = true;
     let unsubOrders = null;
     let unsubProducts = null;
+    let unsubWaitlist = null;
 
-    // ==== СЖАТИЕ ====
-    function compressImage(file, maxSide = 900, quality = 0.75) {
+    // ==== СЖАТИЕ (сильнее, для 7 фото) ====
+    function compressImage(file, maxSide = 600, quality = 0.55) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -291,7 +303,7 @@
         const files = Array.from(event.target.files);
         if (!files.length) return;
         const hint = document.getElementById('photo-hint');
-        const MAX_PHOTOS = 3;
+        const MAX_PHOTOS = 7;
         if (currentImages.length + files.length > MAX_PHOTOS) {
             alert(`Можно не больше ${MAX_PHOTOS} фото. Сейчас уже ${currentImages.length}.`);
             event.target.value = '';
@@ -302,12 +314,12 @@
             try {
                 const base64 = await compressImage(file);
                 const sizeKb = Math.round(base64.length / 1024);
-                if (sizeKb > 600) { alert('Фото слишком большое после сжатия.'); continue; }
+                if (sizeKb > 250) { alert('Фото слишком большое после сжатия, попробуйте другое.'); continue; }
                 currentImages.push(base64);
             } catch (err) { alert('Ошибка обработки: ' + err.message); }
         }
         event.target.value = '';
-        hint.innerText = 'Каждое фото сжимается до ~300 КБ.';
+        hint.innerText = 'До 7 фото, каждое сжимается до ~100–150 КБ.';
         renderPreviewImages();
     };
 
@@ -346,7 +358,7 @@
         document.getElementById('nav-' + name).classList.add('active');
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
-        const titles = { orders: 'Заказы', history: 'История', products: 'Товары', add: editingId ? 'Редактирование' : 'Новый товар' };
+        const titles = { orders: 'Заказы', history: 'История', waitlist: 'Ожидают', products: 'Товары', add: editingId ? 'Редактирование' : 'Новый товар' };
         document.getElementById('page-title').innerText = titles[name];
         document.getElementById('live-badge').style.display = (name === 'orders' && !firstOrdersLoad) ? 'inline-block' : 'none';
     };
@@ -388,11 +400,23 @@
                     allProducts.push({
                         id: d.id, name: p.name || '', description: p.description || '',
                         price: p.price || 0, category: p.category || 'Без категории',
-                        sizes: p.sizes || [], images
+                        sizes: p.sizes || [], images,
+                        inStock: p.inStock !== false
                     });
                 });
                 allProducts.sort((a, b) => a.name.localeCompare(b.name));
                 renderProducts();
+            });
+        }
+        if (!unsubWaitlist) {
+            unsubWaitlist = onSnapshot(collection(db, "waitlist"), (snap) => {
+                allWaitlist = [];
+                snap.forEach(d => allWaitlist.push({ id: d.id, ...d.data() }));
+                allWaitlist.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                const badge = document.getElementById('waitlist-badge');
+                if (allWaitlist.length > 0) { badge.style.display = 'block'; badge.innerText = allWaitlist.length; }
+                else { badge.style.display = 'none'; }
+                renderWaitlist();
             });
         }
     }
@@ -438,9 +462,7 @@
             <div class="total">Итого: ${o.total} ₽</div>
             <div class="status-row">
                 <span class="status-badge ${stInfo.cls}">${stInfo.text}</span>
-                <select class="status-select" data-id="${o.id}">
-                    ${optionsHtml}
-                </select>
+                <select class="status-select" data-id="${o.id}">${optionsHtml}</select>
             </div>
             ${showMeeting ? `
                 <div class="meeting-section">
@@ -461,7 +483,6 @@
         div.querySelector('.status-select').addEventListener('change', async (e) => {
             await updateDoc(doc(db, "orders", o.id), { status: e.target.value });
         });
-
         const saveBtn = div.querySelector('.save-btn');
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -472,13 +493,11 @@
                 setTimeout(() => { saveBtn.innerText = 'Сохранить встречу'; }, 1500);
             });
         }
-
         div.querySelector('.delete-btn').addEventListener('click', async () => {
-            if (!confirm(`Удалить заказ №${o.id.slice(-6)}? Это действие необратимо.`)) return;
+            if (!confirm(`Удалить заказ №${o.id.slice(-6)}?`)) return;
             try { await deleteDoc(doc(db, "orders", o.id)); }
-            catch (e) { alert('Ошибка удаления: ' + e.message); }
+            catch (e) { alert('Ошибка: ' + e.message); }
         });
-
         return div;
     }
 
@@ -508,6 +527,30 @@
         filtered.forEach(o => container.appendChild(buildOrderCard(o, null, false)));
     };
 
+    window.renderWaitlist = function() {
+        const container = document.getElementById('waitlist-list');
+        if (allWaitlist.length === 0) { container.innerHTML = '<div class="empty">Никто не ждёт товар</div>'; return; }
+        container.innerHTML = '';
+        allWaitlist.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'waitlist-item';
+            const date = w.createdAt?.seconds ? new Date(w.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+            div.innerHTML = `
+                <img src="${w.productImage || 'https://via.placeholder.com/56?text=No'}" onerror="this.src='https://via.placeholder.com/56?text=No'">
+                <div class="info">
+                    <h3>${w.productName}</h3>
+                    <div class="meta">${w.customerName} • ${w.customerPhone}${w.customerTelegram ? ' • ' + w.customerTelegram : ''}<br>${date}</div>
+                </div>
+                <button class="del-btn" data-id="${w.id}">Удалить</button>
+            `;
+            div.querySelector('.del-btn').addEventListener('click', async () => {
+                if (!confirm(`Удалить запись "${w.customerName}" по товару "${w.productName}"?`)) return;
+                await deleteDoc(doc(db, "waitlist", w.id));
+            });
+            container.appendChild(div);
+        });
+    };
+
     window.renderProducts = function() {
         const container = document.getElementById('products-list');
         if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте первый!</div>'; return; }
@@ -517,11 +560,12 @@
             div.className = 'product-row';
             const img = p.images[0] || 'https://via.placeholder.com/64?text=No';
             const sizesText = p.sizes.length ? ' • ' + p.sizes.join(', ') : '';
+            const stockText = p.inStock ? '' : ' • <span style="color:var(--danger);">Нет в наличии</span>';
             div.innerHTML = `
                 <img src="${img}" onerror="this.src='https://via.placeholder.com/64?text=No'">
                 <div class="info">
                     <h3>${p.name}</h3>
-                    <div class="meta">${p.category}${sizesText}</div>
+                    <div class="meta">${p.category}${sizesText}${stockText}</div>
                     <div class="price">${p.price} ₽</div>
                 </div>
                 <div class="actions">
@@ -549,6 +593,7 @@
         document.getElementById('f-price').value = p.price;
         document.getElementById('f-category').value = p.category;
         document.getElementById('f-sizes').value = p.sizes.join(', ');
+        document.getElementById('f-instock').checked = p.inStock;
         renderPreviewImages();
         document.getElementById('form-title').innerText = 'Редактирование';
         document.getElementById('cancel-edit-btn').style.display = 'inline-block';
@@ -565,6 +610,7 @@
         document.getElementById('f-price').value = '';
         document.getElementById('f-category').value = '';
         document.getElementById('f-sizes').value = '';
+        document.getElementById('f-instock').checked = true;
         document.getElementById('preview-imgs').innerHTML = '';
         document.getElementById('form-title').innerText = 'Новый товар';
         document.getElementById('cancel-edit-btn').style.display = 'none';
@@ -578,11 +624,12 @@
         const price = Number(document.getElementById('f-price').value);
         const category = document.getElementById('f-category').value.trim() || 'Без категории';
         const sizesRaw = document.getElementById('f-sizes').value.trim();
+        const inStock = document.getElementById('f-instock').checked;
         const status = document.getElementById('form-status');
         if (!name || !price) { status.style.color = 'var(--danger)'; status.innerText = 'Заполните название и цену'; return; }
         if (currentImages.length === 0) { status.style.color = 'var(--danger)'; status.innerText = 'Добавьте хотя бы одно фото'; return; }
         const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
-        const data = { name, description: desc, price, category, sizes, images: currentImages, updatedAt: new Date() };
+        const data = { name, description: desc, price, category, sizes, images: currentImages, inStock, updatedAt: new Date() };
         status.style.color = 'var(--text-muted)';
         status.innerText = 'Сохраняем...';
         try {
@@ -602,6 +649,7 @@
                 document.getElementById('f-price').value = '';
                 document.getElementById('f-category').value = '';
                 document.getElementById('f-sizes').value = '';
+                document.getElementById('f-instock').checked = true;
                 currentImages = [];
                 document.getElementById('preview-imgs').innerHTML = '';
                 editingId = null;
