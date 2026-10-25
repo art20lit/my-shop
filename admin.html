@@ -52,6 +52,9 @@
         .meeting-section .save-btn { background: var(--primary); color: var(--card); border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
         .meeting-info { background: var(--primary-soft); border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 12px; line-height: 1.5; }
 
+        .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .delete-btn { background: none; border: none; color: var(--danger); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 6px 0; }
+
         .product-row { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
         .product-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #e8e2da; flex-shrink: 0; }
         .product-row .info { flex: 1; min-width: 0; }
@@ -79,10 +82,10 @@
         .filter-row select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--card); color: var(--text); }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 50; }
-        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 20px; border-radius: 12px; transition: 0.2s; position: relative; }
+        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 16px; border-radius: 12px; transition: 0.2s; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-        .nav-badge { background: var(--danger); color: white; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
+        .nav-badge { background: var(--danger); color: white; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 8px; font-weight: 600; }
 
         .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
 
@@ -92,6 +95,9 @@
         .preview-imgs img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
         .preview-imgs .del-img { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--danger); color: white; border: none; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
         .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+        /* Вкладка История */
+        .history-note { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; padding: 10px; background: var(--card); border-radius: 10px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -109,25 +115,39 @@
         <span class="live-badge" id="live-badge" style="display:none;">LIVE</span>
     </div>
 
+    <!-- АКТИВНЫЕ ЗАКАЗЫ -->
     <div id="tab-orders" class="tab-content active container">
         <div class="filter-row">
             <select id="order-filter" onchange="renderOrders()">
-                <option value="">Все заказы</option>
+                <option value="">Все активные</option>
                 <option value="new">Новые</option>
                 <option value="accepted">Принято</option>
                 <option value="processing">Взят в обработку</option>
                 <option value="delivery">В процессе доставки</option>
-                <option value="done">Завершён</option>
-                <option value="cancelled">Отказ</option>
             </select>
         </div>
         <div id="orders-list"></div>
     </div>
 
+    <!-- ИСТОРИЯ -->
+    <div id="tab-history" class="tab-content container">
+        <div class="history-note">Здесь заказы со статусами «Завершён» и «Отказ». Их можно удалить.</div>
+        <div class="filter-row">
+            <select id="history-filter" onchange="renderHistory()">
+                <option value="">Все завершённые</option>
+                <option value="done">Завершён</option>
+                <option value="cancelled">Отказ</option>
+            </select>
+        </div>
+        <div id="history-list"></div>
+    </div>
+
+    <!-- ТОВАРЫ -->
     <div id="tab-products" class="tab-content container">
         <div id="products-list"></div>
     </div>
 
+    <!-- ДОБАВИТЬ -->
     <div id="tab-add" class="tab-content container">
         <h2 id="form-title" style="font-size:17px; font-weight:500; margin: 0 0 16px;">Новый товар</h2>
         <div class="form-group">
@@ -166,10 +186,14 @@
         </div>
     </div>
 
+    <!-- НАВИГАЦИЯ (4 иконки) -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-orders" onclick="switchTab('orders')" style="position:relative;">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
             <span class="nav-badge" id="orders-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" id="nav-history" onclick="switchTab('history')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         </div>
         <div class="nav-item" id="nav-products" onclick="switchTab('products')">
             <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
@@ -197,7 +221,6 @@
     const db = getFirestore(app);
     const ADMIN_PASSWORD = "arhip2026";
 
-    // Единый список статусов
     const STATUSES = {
         new:        { text: 'Новый',               cls: 'status-new' },
         accepted:   { text: 'Принято',             cls: 'status-accepted' },
@@ -207,7 +230,6 @@
         cancelled:  { text: 'Отказ',               cls: 'status-cancelled' }
     };
 
-    // Совместимость со старыми статусами
     function normalizeStatus(s) {
         if (!s) return 'new';
         if (s === 'work') return 'processing';
@@ -307,7 +329,7 @@
         document.getElementById('nav-' + name).classList.add('active');
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
-        const titles = { orders: 'Заказы', products: 'Товары', add: editingId ? 'Редактирование' : 'Новый товар' };
+        const titles = { orders: 'Заказы', history: 'История', products: 'Товары', add: editingId ? 'Редактирование' : 'Новый товар' };
         document.getElementById('page-title').innerText = titles[name];
         document.getElementById('live-badge').style.display = (name === 'orders' && !firstOrdersLoad) ? 'inline-block' : 'none';
     };
@@ -330,6 +352,7 @@
                 if (newOnes > 0) document.title = `(${newCount}) Админка`;
                 firstOrdersLoad = false;
                 renderOrders(newOnes > 0 ? allOrders[0].id : null);
+                renderHistory();
             }, (err) => {
                 document.getElementById('orders-list').innerHTML = '<p style="color:var(--danger);">Ошибка: ' + err.message + '</p>';
             });
@@ -357,48 +380,43 @@
         }
     }
 
-    window.renderOrders = function(highlightId) {
-        const filter = document.getElementById('order-filter').value;
-        const container = document.getElementById('orders-list');
-        const filtered = allOrders.filter(o => !filter || normalizeStatus(o.status) === filter);
-        if (filtered.length === 0) { container.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
-        container.innerHTML = '';
-        filtered.forEach(o => {
-            const st = normalizeStatus(o.status);
-            const stInfo = STATUSES[st];
-            const div = document.createElement('div');
-            div.className = 'order-card' + (o.id === highlightId ? ' new' : '');
-            const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-            const itemsHtml = (o.items || []).map(i => {
-                let line = `• ${i.name}`;
-                if (i.size) line += ` (${i.size})`;
-                if (i.qty > 1) line += ` ×${i.qty}`;
-                line += ` — ${i.price * (i.qty || 1)} ₽`;
-                return line;
-            }).join('<br>');
-            const meetingInfo = (o.meetingAddress || o.meetingTime) ? `
-                <div class="meeting-info">
-                    ${o.meetingAddress ? `<div><b>Адрес:</b> ${o.meetingAddress}</div>` : ''}
-                    ${o.meetingTime ? `<div><b>Время:</b> ${o.meetingTime}</div>` : ''}
-                </div>
-            ` : '';
+    // Общая функция для отрисовки карточки заказа
+    function buildOrderCard(o, highlightId, showMeeting) {
+        const st = normalizeStatus(o.status);
+        const stInfo = STATUSES[st];
+        const div = document.createElement('div');
+        div.className = 'order-card' + (o.id === highlightId ? ' new' : '');
+        const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+        const itemsHtml = (o.items || []).map(i => {
+            let line = `• ${i.name}`;
+            if (i.size) line += ` (${i.size})`;
+            if (i.qty > 1) line += ` ×${i.qty}`;
+            line += ` — ${i.price * (i.qty || 1)} ₽`;
+            return line;
+        }).join('<br>');
+        const meetingInfo = (o.meetingAddress || o.meetingTime) ? `
+            <div class="meeting-info">
+                ${o.meetingAddress ? `<div><b>Адрес:</b> ${o.meetingAddress}</div>` : ''}
+                ${o.meetingTime ? `<div><b>Время:</b> ${o.meetingTime}</div>` : ''}
+            </div>
+        ` : '';
 
-            // Опции для выпадающего списка
-            const optionsHtml = Object.keys(STATUSES).map(key => 
-                `<option value="${key}" ${key === st ? 'selected' : ''}>${STATUSES[key].text}</option>`
-            ).join('');
+        const optionsHtml = Object.keys(STATUSES).map(key =>
+            `<option value="${key}" ${key === st ? 'selected' : ''}>${STATUSES[key].text}</option>`
+        ).join('');
 
-            div.innerHTML = `
-                <h3>${o.customerName || 'Без имени'}</h3>
-                <div class="meta">${o.customerPhone || ''}${o.customerTelegram ? ' • ' + o.customerTelegram : ''}<br>${date}</div>
-                <div class="items">${itemsHtml}</div>
-                <div class="total">Итого: ${o.total} ₽</div>
-                <div class="status-row">
-                    <span class="status-badge ${stInfo.cls}">${stInfo.text}</span>
-                    <select class="status-select" data-id="${o.id}">
-                        ${optionsHtml}
-                    </select>
-                </div>
+        div.innerHTML = `
+            <h3>${o.customerName || 'Без имени'}</h3>
+            <div class="meta">${o.customerPhone || ''}${o.customerTelegram ? ' • ' + o.customerTelegram : ''}<br>${date}</div>
+            <div class="items">${itemsHtml}</div>
+            <div class="total">Итого: ${o.total} ₽</div>
+            <div class="status-row">
+                <span class="status-badge ${stInfo.cls}">${stInfo.text}</span>
+                <select class="status-select" data-id="${o.id}">
+                    ${optionsHtml}
+                </select>
+            </div>
+            ${showMeeting ? `
                 <div class="meeting-section">
                     <label>Адрес встречи</label>
                     <input type="text" id="addr-${o.id}" value="${o.meetingAddress || ''}" placeholder="Например: ТЦ Аримарх, 1 этаж">
@@ -407,16 +425,21 @@
                     <button class="save-btn" data-id="${o.id}">Сохранить встречу</button>
                     ${meetingInfo}
                 </div>
-            `;
+            ` : meetingInfo}
+            <div class="order-footer">
+                <span style="font-size:11px; color:var(--text-muted);">Заказ №${o.id.slice(-6)}</span>
+                <button class="delete-btn" data-id="${o.id}">Удалить заказ</button>
+            </div>
+        `;
 
-            // Смена статуса через select
-            div.querySelector('.status-select').addEventListener('change', async (e) => {
-                const newStatus = e.target.value;
-                await updateDoc(doc(db, "orders", o.id), { status: newStatus });
-            });
+        // Смена статуса
+        div.querySelector('.status-select').addEventListener('change', async (e) => {
+            await updateDoc(doc(db, "orders", o.id), { status: e.target.value });
+        });
 
-            // Сохранение встречи
-            const saveBtn = div.querySelector('.save-btn');
+        // Сохранение встречи
+        const saveBtn = div.querySelector('.save-btn');
+        if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 const addr = document.getElementById('addr-' + o.id).value.trim();
                 const time = document.getElementById('time-' + o.id).value.trim();
@@ -424,123 +447,48 @@
                 saveBtn.innerText = 'Сохранено ✓';
                 setTimeout(() => { saveBtn.innerText = 'Сохранить встречу'; }, 1500);
             });
+        }
 
-            container.appendChild(div);
+        // Удаление
+        div.querySelector('.delete-btn').addEventListener('click', async () => {
+            if (!confirm(`Удалить заказ №${o.id.slice(-6)}? Это действие необратимо.`)) return;
+            try {
+                await deleteDoc(doc(db, "orders", o.id));
+            } catch (e) {
+                alert('Ошибка удаления: ' + e.message);
+            }
         });
+
+        return div;
+    }
+
+    window.renderOrders = function(highlightId) {
+        const filter = document.getElementById('order-filter').value;
+        const container = document.getElementById('orders-list');
+        // В активных — только не завершённые и не отменённые
+        const filtered = allOrders.filter(o => {
+            const st = normalizeStatus(o.status);
+            if (st === 'done' || st === 'cancelled') return false;
+            return !filter || st === filter;
+        });
+        if (filtered.length === 0) { container.innerHTML = '<div class="empty">Активных заказов нет</div>'; return; }
+        container.innerHTML = '';
+        filtered.forEach(o => container.appendChild(buildOrderCard(o, highlightId, true)));
+    };
+
+    window.renderHistory = function() {
+        const filter = document.getElementById('history-filter').value;
+        const container = document.getElementById('history-list');
+        const filtered = allOrders.filter(o => {
+            const st = normalizeStatus(o.status);
+            if (st !== 'done' && st !== 'cancelled') return false;
+            return !filter || st === filter;
+        });
+        if (filtered.length === 0) { container.innerHTML = '<div class="empty">История пуста</div>'; return; }
+        container.innerHTML = '';
+        filtered.forEach(o => container.appendChild(buildOrderCard(o, null, false)));
     };
 
     window.renderProducts = function() {
         const container = document.getElementById('products-list');
-        if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте первый!</div>'; return; }
-        container.innerHTML = '';
-        allProducts.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'product-row';
-            const img = p.images[0] || 'https://via.placeholder.com/64?text=No';
-            const sizesText = p.sizes.length ? ' • ' + p.sizes.join(', ') : '';
-            div.innerHTML = `
-                <img src="${img}" onerror="this.src='https://via.placeholder.com/64?text=No'">
-                <div class="info">
-                    <h3>${p.name}</h3>
-                    <div class="meta">${p.category}${sizesText}</div>
-                    <div class="price">${p.price} ₽</div>
-                </div>
-                <div class="actions">
-                    <button class="btn-edit" data-id="${p.id}" data-action="edit">Изменить</button>
-                    <button class="btn-del" data-id="${p.id}" data-action="delete">Удалить</button>
-                </div>
-            `;
-            div.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (btn.dataset.action === 'edit') startEdit(btn.dataset.id);
-                    else deleteProduct(btn.dataset.id, p.name);
-                });
-            });
-            container.appendChild(div);
-        });
-    };
-
-    function startEdit(id) {
-        const p = allProducts.find(x => x.id === id);
-        if (!p) return;
-        editingId = id;
-        currentImages = [...p.images];
-        document.getElementById('f-name').value = p.name;
-        document.getElementById('f-desc').value = p.description;
-        document.getElementById('f-price').value = p.price;
-        document.getElementById('f-category').value = p.category;
-        document.getElementById('f-sizes').value = p.sizes.join(', ');
-        renderPreviewImages();
-        document.getElementById('form-title').innerText = 'Редактирование';
-        document.getElementById('cancel-edit-btn').style.display = 'inline-block';
-        document.getElementById('form-status').innerText = '';
-        switchTab('add');
-        document.getElementById('page-title').innerText = 'Редактирование';
-    }
-
-    window.cancelEdit = function() {
-        editingId = null;
-        currentImages = [];
-        document.getElementById('f-name').value = '';
-        document.getElementById('f-desc').value = '';
-        document.getElementById('f-price').value = '';
-        document.getElementById('f-category').value = '';
-        document.getElementById('f-sizes').value = '';
-        document.getElementById('preview-imgs').innerHTML = '';
-        document.getElementById('form-title').innerText = 'Новый товар';
-        document.getElementById('cancel-edit-btn').style.display = 'none';
-        document.getElementById('form-status').innerText = '';
-        switchTab('products');
-    };
-
-    window.saveProduct = async function() {
-        const name = document.getElementById('f-name').value.trim();
-        const desc = document.getElementById('f-desc').value.trim();
-        const price = Number(document.getElementById('f-price').value);
-        const category = document.getElementById('f-category').value.trim() || 'Без категории';
-        const sizesRaw = document.getElementById('f-sizes').value.trim();
-        const status = document.getElementById('form-status');
-        if (!name || !price) { status.style.color = 'var(--danger)'; status.innerText = 'Заполните название и цену'; return; }
-        if (currentImages.length === 0) { status.style.color = 'var(--danger)'; status.innerText = 'Добавьте хотя бы одно фото'; return; }
-        const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
-        const data = { name, description: desc, price, category, sizes, images: currentImages, updatedAt: new Date() };
-        status.style.color = 'var(--text-muted)';
-        status.innerText = 'Сохраняем...';
-        try {
-            if (editingId) {
-                await updateDoc(doc(db, "products", editingId), data);
-                status.style.color = 'var(--success)';
-                status.innerText = 'Товар обновлён';
-            } else {
-                data.createdAt = new Date();
-                await addDoc(collection(db, "products"), data);
-                status.style.color = 'var(--success)';
-                status.innerText = 'Товар добавлен';
-            }
-            setTimeout(() => {
-                document.getElementById('f-name').value = '';
-                document.getElementById('f-desc').value = '';
-                document.getElementById('f-price').value = '';
-                document.getElementById('f-category').value = '';
-                document.getElementById('f-sizes').value = '';
-                currentImages = [];
-                document.getElementById('preview-imgs').innerHTML = '';
-                editingId = null;
-                document.getElementById('form-title').innerText = 'Новый товар';
-                document.getElementById('cancel-edit-btn').style.display = 'none';
-                document.getElementById('form-status').innerText = '';
-            }, 800);
-        } catch (e) {
-            status.style.color = 'var(--danger)';
-            status.innerText = 'Ошибка: ' + e.message;
-        }
-    };
-
-    async function deleteProduct(id, name) {
-        if (!confirm(`Удалить товар "${name}"?`)) return;
-        try { await deleteDoc(doc(db, "products", id)); }
-        catch (e) { alert('Ошибка: ' + e.message); }
-    }
-</script>
-</body>
-</html>
+        if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте
