@@ -510,8 +510,20 @@
             const ordersHtml = orders.length === 0
                 ? '<p class="empty-state">Заказов пока нет</p>'
                 : orders.map(o => {
-                    const statusText = o.status === 'new' ? 'Новый' : o.status === 'work' ? 'В работе' : 'Выполнен';
-                    const statusColor = o.status === 'new' ? 'var(--danger)' : o.status === 'work' ? '#c9a05a' : 'var(--success)';
+                    // Единый словарь статусов (тот же, что в админке)
+const STATUSES = {
+    new:        { text: 'Новый',               color: '#b85c5c' },
+    accepted:   { text: 'Принято',             color: '#c98a5a' },
+    processing: { text: 'Взят в обработку',    color: '#c9a05a' },
+    delivery:   { text: 'В процессе доставки', color: '#6b8aa0' },
+    done:       { text: 'Завершён',            color: '#6b8e6b' },
+    cancelled:  { text: 'Отказ',               color: '#8a827a' }
+};
+let st = o.status || 'new';
+if (st === 'work') st = 'processing'; // совместимость
+if (!STATUSES[st]) st = 'new';
+const statusText = STATUSES[st].text;
+const statusColor = STATUSES[st].color;
                     const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
                     const itemsHtml = (o.items || []).map(i => {
                         let line = `${i.name}`;
