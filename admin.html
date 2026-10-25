@@ -59,7 +59,7 @@
         .product-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #d8e6f5; flex-shrink: 0; }
         .product-row .info { flex: 1; min-width: 0; }
         .product-row .info h3 { margin: 0 0 3px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .product-row .info .meta { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .product-row .info .meta { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.4; }
         .product-row .info .price { font-weight: 600; color: var(--primary); font-size: 14px; }
         .product-row .actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
         .product-row .actions button { padding: 6px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; border: none; }
@@ -116,6 +116,13 @@
         .waitlist-item .info h3 { margin: 0 0 4px; font-size: 14px; font-weight: 500; }
         .waitlist-item .info .meta { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
         .waitlist-item .del-btn { background: none; border: none; color: var(--danger); font-size: 12px; cursor: pointer; text-decoration: underline; flex-shrink: 0; }
+
+        /* Размеры с наличием */
+        .size-availability { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .size-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); cursor: pointer; font-size: 13px; user-select: none; }
+        .size-chip.checked { background: var(--primary-soft); border-color: var(--primary); }
+        .size-chip input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); margin: 0; }
+        .size-chip span { font-weight: 500; }
     </style>
 </head>
 <body>
@@ -133,7 +140,6 @@
         <span class="live-badge" id="live-badge" style="display:none;">LIVE</span>
     </div>
 
-    <!-- АКТИВНЫЕ -->
     <div id="tab-orders" class="tab-content active container">
         <div class="filter-row">
             <select id="order-filter" onchange="renderOrders()">
@@ -147,7 +153,6 @@
         <div id="orders-list"></div>
     </div>
 
-    <!-- ИСТОРИЯ -->
     <div id="tab-history" class="tab-content container">
         <div class="history-note">Заказы со статусами «Завершён» и «Отказ».</div>
         <div class="filter-row">
@@ -160,23 +165,20 @@
         <div id="history-list"></div>
     </div>
 
-    <!-- ОЖИДАЮТ -->
     <div id="tab-waitlist" class="tab-content container">
-        <div class="history-note">Клиенты, которые ждут появления товара. Когда товар придёт — свяжитесь и удалите запись.</div>
+        <div class="history-note">Клиенты, которые ждут появления товара.</div>
         <div id="waitlist-list"></div>
     </div>
 
-    <!-- ТОВАРЫ -->
     <div id="tab-products" class="tab-content container">
         <div id="products-list"></div>
     </div>
 
-    <!-- ДОБАВИТЬ -->
     <div id="tab-add" class="tab-content container">
         <h2 id="form-title" style="font-size:17px; font-weight:500; margin: 0 0 16px;">Новый товар</h2>
         <div class="form-group">
             <label>Название</label>
-            <input type="text" id="f-name" placeholder="Например: Свитер">
+            <input type="text" id="f-name" placeholder="Например: Джинсы">
         </div>
         <div class="form-group">
             <label>Описание</label>
@@ -184,16 +186,18 @@
         </div>
         <div class="form-row">
             <div class="form-group"><label>Цена (₽)</label><input type="number" id="f-price" placeholder="4900"></div>
-            <div class="form-group"><label>Категория</label><input type="text" id="f-category" placeholder="Свитеры"></div>
+            <div class="form-group"><label>Категория</label><input type="text" id="f-category" placeholder="Джинсы"></div>
         </div>
         <div class="form-group">
             <label>Размеры (через запятую)</label>
-            <input type="text" id="f-sizes" placeholder="S, M, L, XL">
+            <input type="text" id="f-sizes" placeholder="S, M, L, XL" oninput="renderSizeAvailability()">
+            <div class="size-availability" id="size-availability"></div>
+            <div class="hint">Снимите галочку с размера, которого нет в наличии. В каталоге он будет перечёркнут.</div>
         </div>
         <div class="form-group">
             <label class="stock-check">
                 <input type="checkbox" id="f-instock" checked>
-                <span>В наличии</span>
+                <span>Товар в наличии (в целом)</span>
             </label>
         </div>
         <div class="form-group">
@@ -210,7 +214,6 @@
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-orders" onclick="switchTab('orders')" style="position:relative;">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -269,13 +272,44 @@
     let allWaitlist = [];
     let editingId = null;
     let currentImages = [];
+    let currentUnavailable = []; // размеры, которых нет
     let knownOrderIds = new Set();
     let firstOrdersLoad = true;
     let unsubOrders = null;
     let unsubProducts = null;
     let unsubWaitlist = null;
 
-    // ==== СЖАТИЕ (сильнее, для 7 фото) ====
+    // ==== РАЗМЕРЫ: чекбоксы наличия ====
+    // Вызывается при вводе размеров в поле
+    window.renderSizeAvailability = function() {
+        const raw = document.getElementById('f-sizes').value;
+        const sizes = raw.split(',').map(s => s.trim()).filter(s => s);
+        // Убираем из currentUnavailable те, которых больше нет в списке
+        currentUnavailable = currentUnavailable.filter(u => sizes.includes(u));
+        const container = document.getElementById('size-availability');
+        if (sizes.length === 0) { container.innerHTML = ''; return; }
+        container.innerHTML = sizes.map(s => {
+            const available = !currentUnavailable.includes(s);
+            return `
+                <label class="size-chip ${available ? 'checked' : ''}">
+                    <input type="checkbox" ${available ? 'checked' : ''} onchange="toggleSizeAvailability('${s.replace(/'/g, "\\'")}', this.checked)">
+                    <span>${s}</span>
+                </label>
+            `;
+        }).join('');
+    };
+
+    window.toggleSizeAvailability = function(size, isAvailable) {
+        if (isAvailable) {
+            currentUnavailable = currentUnavailable.filter(s => s !== size);
+        } else {
+            if (!currentUnavailable.includes(size)) currentUnavailable.push(size);
+        }
+        // Обновляем визуальное состояние чипа
+        renderSizeAvailability();
+    };
+
+    // ==== СЖАТИЕ ====
     function compressImage(file, maxSide = 600, quality = 0.55) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -314,7 +348,7 @@
             try {
                 const base64 = await compressImage(file);
                 const sizeKb = Math.round(base64.length / 1024);
-                if (sizeKb > 250) { alert('Фото слишком большое после сжатия, попробуйте другое.'); continue; }
+                if (sizeKb > 250) { alert('Фото слишком большое после сжатия.'); continue; }
                 currentImages.push(base64);
             } catch (err) { alert('Ошибка обработки: ' + err.message); }
         }
@@ -400,8 +434,8 @@
                     allProducts.push({
                         id: d.id, name: p.name || '', description: p.description || '',
                         price: p.price || 0, category: p.category || 'Без категории',
-                        sizes: p.sizes || [], images,
-                        inStock: p.inStock !== false
+                        sizes: p.sizes || [], unavailableSizes: p.unavailableSizes || [],
+                        images, inStock: p.inStock !== false
                     });
                 });
                 allProducts.sort((a, b) => a.name.localeCompare(b.name));
@@ -544,7 +578,7 @@
                 <button class="del-btn" data-id="${w.id}">Удалить</button>
             `;
             div.querySelector('.del-btn').addEventListener('click', async () => {
-                if (!confirm(`Удалить запись "${w.customerName}" по товару "${w.productName}"?`)) return;
+                if (!confirm(`Удалить запись "${w.customerName}"?`)) return;
                 await deleteDoc(doc(db, "waitlist", w.id));
             });
             container.appendChild(div);
@@ -559,8 +593,12 @@
             const div = document.createElement('div');
             div.className = 'product-row';
             const img = p.images[0] || 'https://via.placeholder.com/64?text=No';
-            const sizesText = p.sizes.length ? ' • ' + p.sizes.join(', ') : '';
-            const stockText = p.inStock ? '' : ' • <span style="color:var(--danger);">Нет в наличии</span>';
+            const sizesHtml = p.sizes.map(s => {
+                const un = p.unavailableSizes.includes(s);
+                return un ? `<span style="text-decoration:line-through;opacity:0.5;">${s}</span>` : s;
+            }).join(' · ');
+            const sizesText = p.sizes.length ? ' • ' + sizesHtml : '';
+            const stockText = !p.inStock ? ' • <span style="color:var(--danger);">Нет в наличии</span>' : '';
             div.innerHTML = `
                 <img src="${img}" onerror="this.src='https://via.placeholder.com/64?text=No'">
                 <div class="info">
@@ -588,12 +626,14 @@
         if (!p) return;
         editingId = id;
         currentImages = [...p.images];
+        currentUnavailable = [...(p.unavailableSizes || [])];
         document.getElementById('f-name').value = p.name;
         document.getElementById('f-desc').value = p.description;
         document.getElementById('f-price').value = p.price;
         document.getElementById('f-category').value = p.category;
         document.getElementById('f-sizes').value = p.sizes.join(', ');
         document.getElementById('f-instock').checked = p.inStock;
+        renderSizeAvailability();
         renderPreviewImages();
         document.getElementById('form-title').innerText = 'Редактирование';
         document.getElementById('cancel-edit-btn').style.display = 'inline-block';
@@ -605,6 +645,7 @@
     window.cancelEdit = function() {
         editingId = null;
         currentImages = [];
+        currentUnavailable = [];
         document.getElementById('f-name').value = '';
         document.getElementById('f-desc').value = '';
         document.getElementById('f-price').value = '';
@@ -612,6 +653,7 @@
         document.getElementById('f-sizes').value = '';
         document.getElementById('f-instock').checked = true;
         document.getElementById('preview-imgs').innerHTML = '';
+        document.getElementById('size-availability').innerHTML = '';
         document.getElementById('form-title').innerText = 'Новый товар';
         document.getElementById('cancel-edit-btn').style.display = 'none';
         document.getElementById('form-status').innerText = '';
@@ -629,7 +671,9 @@
         if (!name || !price) { status.style.color = 'var(--danger)'; status.innerText = 'Заполните название и цену'; return; }
         if (currentImages.length === 0) { status.style.color = 'var(--danger)'; status.innerText = 'Добавьте хотя бы одно фото'; return; }
         const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
-        const data = { name, description: desc, price, category, sizes, images: currentImages, inStock, updatedAt: new Date() };
+        // Чистим unavailable от тех, которых нет в sizes
+        const unavailableSizes = currentUnavailable.filter(u => sizes.includes(u));
+        const data = { name, description: desc, price, category, sizes, unavailableSizes, images: currentImages, inStock, updatedAt: new Date() };
         status.style.color = 'var(--text-muted)';
         status.innerText = 'Сохраняем...';
         try {
@@ -650,7 +694,9 @@
                 document.getElementById('f-category').value = '';
                 document.getElementById('f-sizes').value = '';
                 document.getElementById('f-instock').checked = true;
+                document.getElementById('size-availability').innerHTML = '';
                 currentImages = [];
+                currentUnavailable = [];
                 document.getElementById('preview-imgs').innerHTML = '';
                 editingId = null;
                 document.getElementById('form-title').innerText = 'Новый товар';
