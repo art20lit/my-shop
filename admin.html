@@ -5,63 +5,107 @@
     <title>Админка - Добавить товар</title>
     <style>
         body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
-        input, textarea { width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; }
+        input, textarea, select { width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
         #status { margin-top: 15px; font-weight: bold; }
+        #login-box { text-align: center; margin-top: 100px; }
+        #admin-panel { display: none; }
     </style>
 </head>
 <body>
-    <h2>Добавить товар в каталог</h2>
+
+<!-- Экран входа -->
+<div id="login-box">
+    <h2>Вход в админку</h2>
+    <input type="password" id="password" placeholder="Пароль">
+    <button onclick="checkPassword()">Войти</button>
+    <div id="login-status" style="color:red; margin-top:10px;"></div>
+</div>
+
+<!-- Панель админа -->
+<div id="admin-panel">
+    <h2>Добавить товар</h2>
     <input type="text" id="name" placeholder="Название товара">
     <textarea id="desc" placeholder="Описание"></textarea>
     <input type="number" id="price" placeholder="Цена (число)">
-    <input type="text" id="img" placeholder="Ссылка на картинку (URL)">
+    <input type="text" id="category" placeholder="Категория (например: Футболки)">
+    <textarea id="img" placeholder="Ссылки на картинки через запятую (URL1, URL2, URL3)"></textarea>
     <button onclick="addProduct()">Сохранить товар</button>
     <div id="status"></div>
+</div>
 
-    <script type="module">
-        // ВАШ firebaseConfig
-        const firebaseConfig = {
-            apiKey: "AIzaSyAtmwSKze_P9F_4Wkd5ZPD45bGNmDXEQ58",
-            authDomain: "my-shop-22c14.firebaseapp.com",
-            projectId: "my-shop-22c14",
-            storageBucket: "my-shop-22c14.firebasestorage.app",
-            messagingSenderId: "1029158788389",
-            appId: "1:1029158788389:web:01bfc85675c52ae315cecc"
-        };
+<script type="module">
+    const firebaseConfig = {
+        apiKey: "AIzaSyAtmwSKze_P9F_4Wkd5ZPD45bGNmDXEQ58",
+        authDomain: "my-shop-22c14.firebaseapp.com",
+        projectId: "my-shop-22c14",
+        storageBucket: "my-shop-22c14.firebasestorage.app",
+        messagingSenderId: "1029158788389",
+        appId: "1:1029158788389:web:01bfc85675c52ae315cecc"
+    };
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        window.addProduct = async function() {
-            const name = document.getElementById('name').value;
-            const desc = document.getElementById('desc').value;
-            const price = Number(document.getElementById('price').value);
-            const img = document.getElementById('img').value;
-            const status = document.getElementById('status');
+    // ПАРОЛЬ АДМИНКИ (поменяйте на свой)
+    const ADMIN_PASSWORD = "arhip2026";
 
-            if(!name || !price) { status.innerText = "Заполните название и цену"; return; }
-
-            try {
-                await addDoc(collection(db, "products"), {
-                    name: name,
-                    description: desc,
-                    price: price,
-                    imageUrl: img,
-                    createdAt: new Date()
-                });
-                status.innerText = "Товар добавлен!";
-                document.getElementById('name').value = '';
-                document.getElementById('desc').value = '';
-                document.getElementById('price').value = '';
-                document.getElementById('img').value = '';
-            } catch (e) {
-                status.innerText = "Ошибка: " + e.message;
-            }
+    window.checkPassword = function() {
+        const pwd = document.getElementById('password').value;
+        if (pwd === ADMIN_PASSWORD) {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            // Запоминаем вход на 7 дней
+            localStorage.setItem('admin_ok', '1');
+        } else {
+            document.getElementById('login-status').innerText = 'Неверный пароль';
         }
-    </script>
+    };
+
+    // Если уже входил — показываем панель сразу
+    if (localStorage.getItem('admin_ok') === '1') {
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+    }
+
+    window.addProduct = async function() {
+        const name = document.getElementById('name').value.trim();
+        const desc = document.getElementById('desc').value.trim();
+        const price = Number(document.getElementById('price').value);
+        const category = document.getElementById('category').value.trim() || 'Без категории';
+        const imgRaw = document.getElementById('img').value.trim();
+        const status = document.getElementById('status');
+
+        if(!name || !price) { status.style.color='red'; status.innerText = "Заполните название и цену"; return; }
+
+        // Разбиваем строку картинок по запятой, чистим от пробелов
+        const imageUrls = imgRaw ? imgRaw.split(',').map(s => s.trim()).filter(s => s) : [];
+
+        try {
+            await addDoc(collection(db, "products"), {
+                name: name,
+                description: desc,
+                price: price,
+                category: category,
+                imageUrls: imageUrls,
+                imageUrl: imageUrls[0] || '', // для совместимости со старыми товарами
+                createdAt: new Date()
+            });
+            status.style.color = 'green';
+            status.innerText = "Товар добавлен!";
+            document.getElementById('name').value = '';
+            document.getElementById('desc').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('img').value = '';
+        } catch (e) {
+            status.style.color = 'red';
+            status.innerText = "Ошибка: " + e.message;
+        }
+    }
+</script>
 </body>
 </html>
