@@ -33,7 +33,7 @@
         @keyframes flash { 0%,100% { background: var(--card); } 50% { background: #f5ebe6; } }
         .order-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
         .order-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
-        .order-card .items { font-size: 13px; margin-bottom: 10px; line-height: 1.6; color: var(--text); }
+        .order-card .items { margin-bottom: 10px; }
         .order-card .total { font-weight: 600; font-size: 15px; margin-bottom: 10px; color: var(--primary); }
         .order-card .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
         .status-badge { padding: 5px 12px; border-radius: 10px; font-size: 12px; color: white; font-weight: 500; }
@@ -96,8 +96,16 @@
         .preview-imgs .del-img { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--danger); color: white; border: none; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
         .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
-        /* Вкладка История */
         .history-note { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; padding: 10px; background: var(--card); border-radius: 10px; line-height: 1.5; }
+
+        /* Стили для товаров внутри заказа */
+        .order-item-row { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+        .order-item-row:last-child { border-bottom: none; }
+        .order-item-row img { width:48px; height:48px; object-fit:cover; border-radius:8px; background:#e8e2da; flex-shrink:0; }
+        .order-item-info { flex:1; min-width:0; }
+        .order-item-name { font-size:13px; font-weight:500; line-height:1.3; }
+        .order-item-meta { font-size:11px; color:var(--text-muted); margin-top:2px; }
+        .order-item-price { font-size:13px; font-weight:600; color:var(--primary); flex-shrink:0; }
     </style>
 </head>
 <body>
@@ -186,7 +194,7 @@
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ (4 иконки) -->
+    <!-- НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-orders" onclick="switchTab('orders')" style="position:relative;">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -380,20 +388,29 @@
         }
     }
 
-    // Общая функция для отрисовки карточки заказа
     function buildOrderCard(o, highlightId, showMeeting) {
         const st = normalizeStatus(o.status);
         const stInfo = STATUSES[st];
         const div = document.createElement('div');
         div.className = 'order-card' + (o.id === highlightId ? ' new' : '');
         const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
         const itemsHtml = (o.items || []).map(i => {
-            let line = `• ${i.name}`;
-            if (i.size) line += ` (${i.size})`;
-            if (i.qty > 1) line += ` ×${i.qty}`;
-            line += ` — ${i.price * (i.qty || 1)} ₽`;
-            return line;
-        }).join('<br>');
+            const imgSrc = i.image || 'https://via.placeholder.com/48?text=No';
+            const sizeText = i.size ? `Размер: ${i.size}` : '';
+            const qtyText = i.qty > 1 ? ` ×${i.qty}` : '';
+            return `
+                <div class="order-item-row">
+                    <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/48?text=No'">
+                    <div class="order-item-info">
+                        <div class="order-item-name">${i.name}${qtyText}</div>
+                        ${sizeText ? `<div class="order-item-meta">${sizeText}</div>` : ''}
+                    </div>
+                    <div class="order-item-price">${i.price * (i.qty || 1)} ₽</div>
+                </div>
+            `;
+        }).join('');
+
         const meetingInfo = (o.meetingAddress || o.meetingTime) ? `
             <div class="meeting-info">
                 ${o.meetingAddress ? `<div><b>Адрес:</b> ${o.meetingAddress}</div>` : ''}
@@ -432,12 +449,10 @@
             </div>
         `;
 
-        // Смена статуса
         div.querySelector('.status-select').addEventListener('change', async (e) => {
             await updateDoc(doc(db, "orders", o.id), { status: e.target.value });
         });
 
-        // Сохранение встречи
         const saveBtn = div.querySelector('.save-btn');
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -449,14 +464,10 @@
             });
         }
 
-        // Удаление
         div.querySelector('.delete-btn').addEventListener('click', async () => {
             if (!confirm(`Удалить заказ №${o.id.slice(-6)}? Это действие необратимо.`)) return;
-            try {
-                await deleteDoc(doc(db, "orders", o.id));
-            } catch (e) {
-                alert('Ошибка удаления: ' + e.message);
-            }
+            try { await deleteDoc(doc(db, "orders", o.id)); }
+            catch (e) { alert('Ошибка удаления: ' + e.message); }
         });
 
         return div;
@@ -465,7 +476,6 @@
     window.renderOrders = function(highlightId) {
         const filter = document.getElementById('order-filter').value;
         const container = document.getElementById('orders-list');
-        // В активных — только не завершённые и не отменённые
         const filtered = allOrders.filter(o => {
             const st = normalizeStatus(o.status);
             if (st === 'done' || st === 'cancelled') return false;
