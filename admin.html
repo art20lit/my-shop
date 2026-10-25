@@ -2,115 +2,137 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Админ-панель</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: sans-serif; margin: 0; padding: 15px; background: #f4f4f4; }
-        h1 { font-size: 22px; margin: 0 0 15px; }
-        h2 { font-size: 18px; margin: 20px 0 10px; }
+        :root {
+            --bg: #f0ece6;
+            --card: #faf8f5;
+            --text: #3a3632;
+            --text-muted: #8a827a;
+            --primary: #6b6259;
+            --primary-soft: #d6cec4;
+            --border: #e0d9d0;
+            --danger: #b85c5c;
+            --warning: #c9a05a;
+            --success: #6b8e6b;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 70px; }
 
-        #login-box { text-align: center; margin-top: 100px; }
-        #login-box input { padding: 10px; width: 100%; max-width: 300px; margin-bottom: 10px; }
-        .btn { padding: 10px 16px; cursor: pointer; border: none; border-radius: 6px; font-size: 14px; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-warning { background: #ffc107; color: #333; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
+        /* Вход */
+        #login-box { text-align: center; padding: 80px 20px; max-width: 400px; margin: 0 auto; }
+        #login-box h1 { font-weight: 500; font-size: 22px; margin-bottom: 24px; }
+        #login-box input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; background: var(--card); margin-bottom: 12px; box-sizing: border-box; }
+        #login-box button { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: var(--card); font-size: 15px; font-weight: 500; cursor: pointer; }
 
+        /* Панель */
         #panel { display: none; }
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; }
-        .tab { padding: 10px 18px; cursor: pointer; border: none; background: transparent; font-size: 15px; border-bottom: 3px solid transparent; }
-        .tab.active { border-bottom-color: #007bff; color: #007bff; font-weight: bold; }
+        .header { padding: 18px 20px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: 0.5px; }
+        .live-badge { display: inline-block; background: var(--success); color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+
+        .container { padding: 0 20px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit;
-        }
+        /* Заказы */
+        .order-card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 12px; border-left: 3px solid var(--border); }
+        .order-card.new { border-left-color: var(--danger); animation: flash 2s; }
+        @keyframes flash { 0%,100% { background: var(--card); } 50% { background: #f5ebe6; } }
+        .order-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+        .order-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+        .order-card .items { font-size: 13px; margin-bottom: 10px; line-height: 1.6; color: var(--text); }
+        .order-card .total { font-weight: 600; font-size: 15px; margin-bottom: 10px; color: var(--primary); }
+        .order-card .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .status-badge { padding: 4px 10px; border-radius: 10px; font-size: 11px; color: white; font-weight: 500; }
+        .status-new { background: var(--danger); }
+        .status-work { background: var(--warning); }
+        .status-done { background: var(--success); }
+        .order-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .btn-small { padding: 8px 12px; border: 1px solid var(--border); background: transparent; border-radius: 10px; font-size: 12px; cursor: pointer; color: var(--text); }
+        .btn-small:hover { background: var(--bg); }
+
+        /* Товары */
+        .product-row { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
+        .product-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #e8e2da; flex-shrink: 0; }
+        .product-row .info { flex: 1; min-width: 0; }
+        .product-row .info h3 { margin: 0 0 3px; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-row .info .meta { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .product-row .info .price { font-weight: 600; color: var(--primary); font-size: 14px; }
+        .product-row .actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+        .product-row .actions button { padding: 6px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; border: none; }
+        .btn-edit { background: var(--primary-soft); color: var(--text); }
+        .btn-del { background: #ecd5d5; color: var(--danger); }
+
+        /* Форма */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 13px; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; background: var(--card); color: var(--text); font-family: inherit; }
         .form-group textarea { resize: vertical; min-height: 60px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+        @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
 
-        .product-item { background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .product-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; background: #eee; flex-shrink: 0; }
-        .product-item .info { flex: 1; min-width: 0; }
-        .product-item .info h3 { margin: 0 0 4px; font-size: 15px; }
-        .product-item .info .meta { font-size: 12px; color: #666; margin-bottom: 4px; }
-        .product-item .info .price { font-weight: bold; }
-        .product-item .actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-        .product-item .actions button { font-size: 12px; padding: 6px 10px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: var(--card); }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .status-msg { font-size: 13px; margin-top: 8px; }
 
-        .order { background: white; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ddd; }
-        .order.new-order { border-left-color: #dc3545; animation: flash 2s; }
-        @keyframes flash { 0%,100% { background: white; } 50% { background: #ffe6e6; } }
-        .order h3 { margin: 0 0 8px; font-size: 16px; }
-        .order .meta { font-size: 13px; color: #666; margin-bottom: 8px; }
-        .order .items { font-size: 14px; margin-bottom: 8px; }
-        .order .total { font-weight: bold; margin-bottom: 10px; }
-        .order .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; color: white; margin-right: 10px; }
-        .status-new { background: #dc3545; }
-        .status-work { background: #ffc107; color: #333; }
-        .status-done { background: #28a745; }
-        .order .actions button { margin-right: 6px; font-size: 13px; margin-top: 8px; }
+        /* Фильтр */
+        .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+        .filter-row select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--card); color: var(--text); }
 
-        .empty { text-align: center; color: #999; padding: 30px; background: white; border-radius: 8px; }
-        .status-msg { margin-top: 10px; font-size: 14px; }
-        .live-badge { display: inline-block; background: #28a745; color: white; padding: 3px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; vertical-align: middle; }
-        .sound-btn { background: #ffc107; color: #333; font-size: 12px; padding: 6px 10px; }
-        .edit-images-preview { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-        .edit-images-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+        /* Нижняя навигация */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 50; }
+        .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); padding: 6px 20px; border-radius: 12px; transition: 0.2s; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .nav-badge { background: var(--danger); color: white; border-radius: 50%; padding: 1px 5px; font-size: 10px; position: absolute; top: 0; right: 12px; font-weight: 600; }
+
+        .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <!-- ВХОД -->
 <div id="login-box">
-    <h1>Вход в админку</h1>
+    <h1>Админ-панель</h1>
     <input type="password" id="password" placeholder="Пароль">
-    <button class="btn btn-primary" onclick="checkPassword()">Войти</button>
-    <div id="login-status" style="color:red; margin-top:10px;"></div>
+    <button onclick="checkPassword()">Войти</button>
+    <div id="login-status" style="color:var(--danger); margin-top:12px; font-size:13px;"></div>
 </div>
 
 <!-- ПАНЕЛЬ -->
 <div id="panel">
-    <h1>Админ-панель</h1>
-
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('orders', this)">Заказы <span class="live-badge" id="live-badge" style="display:none;">LIVE</span></button>
-        <button class="tab" onclick="switchTab('products', this)">Товары</button>
-        <button class="tab" onclick="switchTab('add', this)">Добавить товар</button>
+    <div class="header">
+        <h1 id="page-title">Заказы</h1>
+        <span class="live-badge" id="live-badge" style="display:none;">LIVE</span>
     </div>
 
     <!-- Вкладка: ЗАКАЗЫ -->
-    <div id="tab-orders" class="tab-content active">
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
-            <label>Фильтр:</label>
-            <select id="order-filter" onchange="renderOrders()" style="padding:8px; border-radius:6px; border:1px solid #ccc;">
-                <option value="">Все</option>
+    <div id="tab-orders" class="tab-content active container">
+        <div class="filter-row">
+            <select id="order-filter" onchange="renderOrders()">
+                <option value="">Все заказы</option>
                 <option value="new">Новые</option>
                 <option value="work">В работе</option>
                 <option value="done">Выполненные</option>
             </select>
-            <button class="btn sound-btn" id="sound-btn" onclick="enableSound()">🔔 Включить звук</button>
         </div>
         <div id="orders-list"></div>
     </div>
 
     <!-- Вкладка: ТОВАРЫ -->
-    <div id="tab-products" class="tab-content">
+    <div id="tab-products" class="tab-content container">
         <div id="products-list"></div>
     </div>
 
-    <!-- Вкладка: ДОБАВИТЬ / РЕДАКТИРОВАТЬ -->
-    <div id="tab-add" class="tab-content">
-        <h2 id="form-title">Добавить товар</h2>
+    <!-- Вкладка: ДОБАВИТЬ/РЕДАКТИРОВАТЬ -->
+    <div id="tab-add" class="tab-content container">
+        <h2 id="form-title" style="font-size:17px; font-weight:500; margin: 0 0 16px;">Новый товар</h2>
         <div class="form-group">
-            <label>Название *</label>
-            <input type="text" id="f-name" placeholder="Например: Футболка хлопок">
+            <label>Название</label>
+            <input type="text" id="f-name" placeholder="Например: Свитер">
         </div>
         <div class="form-group">
             <label>Описание</label>
@@ -118,12 +140,12 @@
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Цена (₽) *</label>
-                <input type="number" id="f-price" placeholder="1500">
+                <label>Цена (₽)</label>
+                <input type="number" id="f-price" placeholder="4900">
             </div>
             <div class="form-group">
                 <label>Категория</label>
-                <input type="text" id="f-category" placeholder="Футболки">
+                <input type="text" id="f-category" placeholder="Свитеры">
             </div>
         </div>
         <div class="form-group">
@@ -131,13 +153,27 @@
             <input type="text" id="f-sizes" placeholder="S, M, L, XL">
         </div>
         <div class="form-group">
-            <label>Ссылки на фото (через запятую)</label>
+            <label>Фото (ссылки через запятую)</label>
             <textarea id="f-images" placeholder="https://.../1.jpg, https://.../2.jpg"></textarea>
         </div>
         <div id="form-status" class="status-msg"></div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn btn-success" onclick="saveProduct()">Сохранить</button>
+        <div style="display:flex; gap:10px; margin-top: 16px;">
+            <button class="btn btn-primary" onclick="saveProduct()">Сохранить</button>
             <button class="btn btn-secondary" id="cancel-edit-btn" style="display:none;" onclick="cancelEdit()">Отмена</button>
+        </div>
+    </div>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="nav-orders" onclick="switchTab('orders')" style="position:relative;">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <span class="nav-badge" id="orders-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" id="nav-products" onclick="switchTab('products')">
+            <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        </div>
+        <div class="nav-item" id="nav-add" onclick="switchTab('add')">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </div>
     </div>
 </div>
@@ -164,8 +200,6 @@
     let editingId = null;
     let knownOrderIds = new Set();
     let firstOrdersLoad = true;
-    let audioCtx = null;
-    let soundEnabled = false;
     let unsubOrders = null;
     let unsubProducts = null;
 
@@ -188,11 +222,14 @@
     }
 
     // ==== ВКЛАДКИ ====
-    window.switchTab = function(name, btn) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    window.switchTab = function(name) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('nav-' + name).classList.add('active');
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
+        const titles = { orders: 'Заказы', products: 'Товары', add: editingId ? 'Редактирование' : 'Новый товар' };
+        document.getElementById('page-title').innerText = titles[name];
+        document.getElementById('live-badge').style.display = (name === 'orders' && !firstOrdersLoad) ? 'inline-block' : 'none';
     };
 
     // ==== ПОДПИСКИ ====
@@ -210,15 +247,15 @@
                     }
                 });
                 allOrders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                if (newOnes > 0) {
-                    playSound();
-                    document.title = `(${newOnes}) Заказы`;
-                    document.getElementById('live-badge').style.display = 'inline-block';
-                }
+                const newCount = allOrders.filter(o => o.status === 'new').length;
+                const badge = document.getElementById('orders-badge');
+                if (newCount > 0) { badge.style.display = 'block'; badge.innerText = newCount; }
+                else { badge.style.display = 'none'; }
+                if (newOnes > 0) document.title = `(${newCount}) Админка`;
                 firstOrdersLoad = false;
                 renderOrders(newOnes > 0 ? allOrders[0].id : null);
             }, (err) => {
-                document.getElementById('orders-list').innerHTML = '<p style="color:red;">Ошибка: ' + err.message + '</p>';
+                document.getElementById('orders-list').innerHTML = '<p style="color:var(--danger);">Ошибка: ' + err.message + '</p>';
             });
         }
         if (!unsubProducts) {
@@ -227,17 +264,11 @@
                 snap.forEach(d => {
                     const p = d.data();
                     let urls = p.imageUrls;
-                    if (!urls || !Array.isArray(urls) || urls.length === 0) {
-                        urls = p.imageUrl ? [p.imageUrl] : [];
-                    }
+                    if (!urls || !Array.isArray(urls) || urls.length === 0) urls = p.imageUrl ? [p.imageUrl] : [];
                     allProducts.push({
-                        id: d.id,
-                        name: p.name || '',
-                        description: p.description || '',
-                        price: p.price || 0,
-                        category: p.category || 'Без категории',
-                        sizes: p.sizes || [],
-                        imageUrls: urls
+                        id: d.id, name: p.name || '', description: p.description || '',
+                        price: p.price || 0, category: p.category || 'Без категории',
+                        sizes: p.sizes || [], imageUrls: urls
                     });
                 });
                 allProducts.sort((a, b) => a.name.localeCompare(b.name));
@@ -251,40 +282,33 @@
         const filter = document.getElementById('order-filter').value;
         const container = document.getElementById('orders-list');
         const filtered = allOrders.filter(o => !filter || o.status === filter);
-
-        if (filtered.length === 0) {
-            container.innerHTML = '<div class="empty">Заказов нет</div>';
-            return;
-        }
-
+        if (filtered.length === 0) { container.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
         container.innerHTML = '';
         filtered.forEach(o => {
             const div = document.createElement('div');
-            div.className = 'order' + (o.id === highlightId ? ' new-order' : '');
+            div.className = 'order-card' + (o.id === highlightId ? ' new' : '');
             const badgeClass = o.status === 'new' ? 'status-new' : o.status === 'work' ? 'status-work' : 'status-done';
             const badgeText = o.status === 'new' ? 'Новый' : o.status === 'work' ? 'В работе' : 'Выполнен';
-            const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU') : '';
-
+            const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
             const itemsHtml = (o.items || []).map(i => {
-                let line = `• ${i.name} — ${i.price} ₽`;
-                if (i.size) line += ` (размер: ${i.size})`;
+                let line = `• ${i.name}`;
+                if (i.size) line += ` (${i.size})`;
+                if (i.qty > 1) line += ` ×${i.qty}`;
+                line += ` — ${i.price * (i.qty || 1)} ₽`;
                 return line;
             }).join('<br>');
-
             div.innerHTML = `
                 <h3>${o.customerName || 'Без имени'}</h3>
-                <div class="meta">${o.customerPhone || ''} ${o.customerTelegram ? '• ' + o.customerTelegram : ''} • ${date}</div>
+                <div class="meta">${o.customerPhone || ''}${o.customerTelegram ? ' • ' + o.customerTelegram : ''}<br>${date}</div>
                 <div class="items">${itemsHtml}</div>
                 <div class="total">Итого: ${o.total} ₽</div>
-                <div>
-                    <span class="status-badge ${badgeClass}">${badgeText}</span>
-                </div>
-                <div class="actions">
-                    <button class="btn btn-warning" data-id="${o.id}" data-status="work">В работу</button>
-                    <button class="btn btn-success" data-id="${o.id}" data-status="done">Выполнен</button>
+                <div class="status-row"><span class="status-badge ${badgeClass}">${badgeText}</span></div>
+                <div class="order-actions">
+                    ${o.status !== 'work' && o.status !== 'done' ? `<button class="btn-small" data-id="${o.id}" data-status="work">В работу</button>` : ''}
+                    ${o.status !== 'done' ? `<button class="btn-small" data-id="${o.id}" data-status="done">Выполнен</button>` : ''}
                 </div>
             `;
-            div.querySelectorAll('.actions button').forEach(btn => {
+            div.querySelectorAll('.order-actions button').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     await updateDoc(doc(db, "orders", btn.dataset.id), { status: btn.dataset.status });
                 });
@@ -296,33 +320,29 @@
     // ==== ТОВАРЫ ====
     window.renderProducts = function() {
         const container = document.getElementById('products-list');
-        if (allProducts.length === 0) {
-            container.innerHTML = '<div class="empty">Товаров пока нет. Добавьте первый!</div>';
-            return;
-        }
+        if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте первый!</div>'; return; }
         container.innerHTML = '';
         allProducts.forEach(p => {
             const div = document.createElement('div');
-            div.className = 'product-item';
-            const img = p.imageUrls[0] || 'https://via.placeholder.com/80?text=No';
-            const sizesText = p.sizes.length ? ' • Размеры: ' + p.sizes.join(', ') : '';
+            div.className = 'product-row';
+            const img = p.imageUrls[0] || 'https://via.placeholder.com/64?text=No';
+            const sizesText = p.sizes.length ? ' • ' + p.sizes.join(', ') : '';
             div.innerHTML = `
-                <img src="${img}" onerror="this.src='https://via.placeholder.com/80?text=No'">
+                <img src="${img}" onerror="this.src='https://via.placeholder.com/64?text=No'">
                 <div class="info">
                     <h3>${p.name}</h3>
                     <div class="meta">${p.category}${sizesText}</div>
-                    <div class="meta">${p.description || ''}</div>
                     <div class="price">${p.price} ₽</div>
                 </div>
                 <div class="actions">
-                    <button class="btn btn-warning" data-id="${p.id}" data-action="edit">Изменить</button>
-                    <button class="btn btn-danger" data-id="${p.id}" data-action="delete">Удалить</button>
+                    <button class="btn-edit" data-id="${p.id}" data-action="edit">Изменить</button>
+                    <button class="btn-del" data-id="${p.id}" data-action="delete">Удалить</button>
                 </div>
             `;
             div.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     if (btn.dataset.action === 'edit') startEdit(btn.dataset.id);
-                    else if (btn.dataset.action === 'delete') deleteProduct(btn.dataset.id, p.name);
+                    else deleteProduct(btn.dataset.id, p.name);
                 });
             });
             container.appendChild(div);
@@ -339,13 +359,11 @@
         document.getElementById('f-category').value = p.category;
         document.getElementById('f-sizes').value = p.sizes.join(', ');
         document.getElementById('f-images').value = p.imageUrls.join(', ');
-        document.getElementById('form-title').innerText = 'Редактировать товар';
+        document.getElementById('form-title').innerText = 'Редактирование';
         document.getElementById('cancel-edit-btn').style.display = 'inline-block';
         document.getElementById('form-status').innerText = '';
-        // Переключаем на вкладку "Добавить"
-        const addTab = [...document.querySelectorAll('.tab')].find(t => t.innerText.includes('Добавить'));
-        switchTab('add', addTab);
-        window.scrollTo(0, 0);
+        switchTab('add');
+        document.getElementById('page-title').innerText = 'Редактирование';
     }
 
     window.cancelEdit = function() {
@@ -356,11 +374,10 @@
         document.getElementById('f-category').value = '';
         document.getElementById('f-sizes').value = '';
         document.getElementById('f-images').value = '';
-        document.getElementById('form-title').innerText = 'Добавить товар';
+        document.getElementById('form-title').innerText = 'Новый товар';
         document.getElementById('cancel-edit-btn').style.display = 'none';
         document.getElementById('form-status').innerText = '';
-        const prodTab = [...document.querySelectorAll('.tab')].find(t => t.innerText.includes('Товары'));
-        switchTab('products', prodTab);
+        switchTab('products');
     };
 
     window.saveProduct = async function() {
@@ -371,85 +388,45 @@
         const sizesRaw = document.getElementById('f-sizes').value.trim();
         const imagesRaw = document.getElementById('f-images').value.trim();
         const status = document.getElementById('form-status');
-
-        if (!name || !price) {
-            status.style.color = 'red';
-            status.innerText = 'Заполните название и цену';
-            return;
-        }
-
+        if (!name || !price) { status.style.color = 'var(--danger)'; status.innerText = 'Заполните название и цену'; return; }
         const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
         const imageUrls = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
-
-        const data = {
-            name, description: desc, price, category, sizes,
-            imageUrls, imageUrl: imageUrls[0] || '',
-            updatedAt: new Date()
-        };
-
-        status.style.color = '#666';
+        const data = { name, description: desc, price, category, sizes, imageUrls, imageUrl: imageUrls[0] || '', updatedAt: new Date() };
+        status.style.color = 'var(--text-muted)';
         status.innerText = 'Сохраняем...';
-
         try {
             if (editingId) {
                 await updateDoc(doc(db, "products", editingId), data);
-                status.style.color = 'green';
-                status.innerText = 'Товар обновлён!';
+                status.style.color = 'var(--success)';
+                status.innerText = 'Товар обновлён';
             } else {
                 data.createdAt = new Date();
                 await addDoc(collection(db, "products"), data);
-                status.style.color = 'green';
-                status.innerText = 'Товар добавлен!';
+                status.style.color = 'var(--success)';
+                status.innerText = 'Товар добавлен';
             }
-            // Чистим форму
-            document.getElementById('f-name').value = '';
-            document.getElementById('f-desc').value = '';
-            document.getElementById('f-price').value = '';
-            document.getElementById('f-category').value = '';
-            document.getElementById('f-sizes').value = '';
-            document.getElementById('f-images').value = '';
-            editingId = null;
-            document.getElementById('form-title').innerText = 'Добавить товар';
-            document.getElementById('cancel-edit-btn').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-desc').value = '';
+                document.getElementById('f-price').value = '';
+                document.getElementById('f-category').value = '';
+                document.getElementById('f-sizes').value = '';
+                document.getElementById('f-images').value = '';
+                editingId = null;
+                document.getElementById('form-title').innerText = 'Новый товар';
+                document.getElementById('cancel-edit-btn').style.display = 'none';
+                document.getElementById('form-status').innerText = '';
+            }, 800);
         } catch (e) {
-            status.style.color = 'red';
+            status.style.color = 'var(--danger)';
             status.innerText = 'Ошибка: ' + e.message;
         }
     };
 
     async function deleteProduct(id, name) {
-        if (!confirm(`Удалить товар "${name}"? Это действие необратимо.`)) return;
-        try {
-            await deleteDoc(doc(db, "products", id));
-        } catch (e) {
-            alert('Ошибка удаления: ' + e.message);
-        }
-    }
-
-    // ==== ЗВУК ====
-    window.enableSound = function() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioCtx.resume();
-        soundEnabled = true;
-        const btn = document.getElementById('sound-btn');
-        btn.innerText = '🔔 Звук включён';
-        btn.style.background = '#28a745';
-        btn.style.color = 'white';
-        btn.disabled = true;
-        playSound();
-    };
-
-    function playSound() {
-        if (!soundEnabled || !audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
+        if (!confirm(`Удалить товар "${name}"?`)) return;
+        try { await deleteDoc(doc(db, "products", id)); }
+        catch (e) { alert('Ошибка: ' + e.message); }
     }
 </script>
 </body>
