@@ -491,4 +491,116 @@
 
     window.renderProducts = function() {
         const container = document.getElementById('products-list');
-        if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте
+        if (allProducts.length === 0) { container.innerHTML = '<div class="empty">Товаров нет. Добавьте первый!</div>'; return; }
+        container.innerHTML = '';
+        allProducts.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'product-row';
+            const img = p.images[0] || 'https://via.placeholder.com/64?text=No';
+            const sizesText = p.sizes.length ? ' • ' + p.sizes.join(', ') : '';
+            div.innerHTML = `
+                <img src="${img}" onerror="this.src='https://via.placeholder.com/64?text=No'">
+                <div class="info">
+                    <h3>${p.name}</h3>
+                    <div class="meta">${p.category}${sizesText}</div>
+                    <div class="price">${p.price} ₽</div>
+                </div>
+                <div class="actions">
+                    <button class="btn-edit" data-id="${p.id}" data-action="edit">Изменить</button>
+                    <button class="btn-del" data-id="${p.id}" data-action="delete">Удалить</button>
+                </div>
+            `;
+            div.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.action === 'edit') startEdit(btn.dataset.id);
+                    else deleteProduct(btn.dataset.id, p.name);
+                });
+            });
+            container.appendChild(div);
+        });
+    };
+
+    function startEdit(id) {
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        editingId = id;
+        currentImages = [...p.images];
+        document.getElementById('f-name').value = p.name;
+        document.getElementById('f-desc').value = p.description;
+        document.getElementById('f-price').value = p.price;
+        document.getElementById('f-category').value = p.category;
+        document.getElementById('f-sizes').value = p.sizes.join(', ');
+        renderPreviewImages();
+        document.getElementById('form-title').innerText = 'Редактирование';
+        document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+        document.getElementById('form-status').innerText = '';
+        switchTab('add');
+        document.getElementById('page-title').innerText = 'Редактирование';
+    }
+
+    window.cancelEdit = function() {
+        editingId = null;
+        currentImages = [];
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-desc').value = '';
+        document.getElementById('f-price').value = '';
+        document.getElementById('f-category').value = '';
+        document.getElementById('f-sizes').value = '';
+        document.getElementById('preview-imgs').innerHTML = '';
+        document.getElementById('form-title').innerText = 'Новый товар';
+        document.getElementById('cancel-edit-btn').style.display = 'none';
+        document.getElementById('form-status').innerText = '';
+        switchTab('products');
+    };
+
+    window.saveProduct = async function() {
+        const name = document.getElementById('f-name').value.trim();
+        const desc = document.getElementById('f-desc').value.trim();
+        const price = Number(document.getElementById('f-price').value);
+        const category = document.getElementById('f-category').value.trim() || 'Без категории';
+        const sizesRaw = document.getElementById('f-sizes').value.trim();
+        const status = document.getElementById('form-status');
+        if (!name || !price) { status.style.color = 'var(--danger)'; status.innerText = 'Заполните название и цену'; return; }
+        if (currentImages.length === 0) { status.style.color = 'var(--danger)'; status.innerText = 'Добавьте хотя бы одно фото'; return; }
+        const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
+        const data = { name, description: desc, price, category, sizes, images: currentImages, updatedAt: new Date() };
+        status.style.color = 'var(--text-muted)';
+        status.innerText = 'Сохраняем...';
+        try {
+            if (editingId) {
+                await updateDoc(doc(db, "products", editingId), data);
+                status.style.color = 'var(--success)';
+                status.innerText = 'Товар обновлён';
+            } else {
+                data.createdAt = new Date();
+                await addDoc(collection(db, "products"), data);
+                status.style.color = 'var(--success)';
+                status.innerText = 'Товар добавлен';
+            }
+            setTimeout(() => {
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-desc').value = '';
+                document.getElementById('f-price').value = '';
+                document.getElementById('f-category').value = '';
+                document.getElementById('f-sizes').value = '';
+                currentImages = [];
+                document.getElementById('preview-imgs').innerHTML = '';
+                editingId = null;
+                document.getElementById('form-title').innerText = 'Новый товар';
+                document.getElementById('cancel-edit-btn').style.display = 'none';
+                document.getElementById('form-status').innerText = '';
+            }, 800);
+        } catch (e) {
+            status.style.color = 'var(--danger)';
+            status.innerText = 'Ошибка: ' + e.message;
+        }
+    };
+
+    async function deleteProduct(id, name) {
+        if (!confirm(`Удалить товар "${name}"?`)) return;
+        try { await deleteDoc(doc(db, "products", id)); }
+        catch (e) { alert('Ошибка: ' + e.message); }
+    }
+</script>
+</body>
+</html>
