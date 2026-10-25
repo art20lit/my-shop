@@ -9,6 +9,7 @@
             --bg: #f0ece6; --card: #faf8f5; --text: #3a3632; --text-muted: #8a827a;
             --primary: #6b6259; --primary-soft: #d6cec4; --border: #e0d9d0;
             --danger: #b85c5c; --warning: #c9a05a; --success: #6b8e6b;
+            --accepted: #c98a5a; --processing: #c9a05a; --delivery: #6b8aa0; --cancelled: #8a827a;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 70px; }
@@ -34,14 +35,16 @@
         .order-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
         .order-card .items { font-size: 13px; margin-bottom: 10px; line-height: 1.6; color: var(--text); }
         .order-card .total { font-weight: 600; font-size: 15px; margin-bottom: 10px; color: var(--primary); }
-        .order-card .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-        .status-badge { padding: 4px 10px; border-radius: 10px; font-size: 11px; color: white; font-weight: 500; }
+        .order-card .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .status-badge { padding: 5px 12px; border-radius: 10px; font-size: 12px; color: white; font-weight: 500; }
         .status-new { background: var(--danger); }
-        .status-work { background: var(--warning); }
+        .status-accepted { background: var(--accepted); }
+        .status-processing { background: var(--processing); }
+        .status-delivery { background: var(--delivery); }
         .status-done { background: var(--success); }
-        .order-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
-        .btn-small { padding: 8px 12px; border: 1px solid var(--border); background: transparent; border-radius: 10px; font-size: 12px; cursor: pointer; color: var(--text); }
-        .btn-small:hover { background: var(--bg); }
+        .status-cancelled { background: var(--cancelled); }
+
+        .status-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--bg); color: var(--text); cursor: pointer; }
 
         .meeting-section { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
         .meeting-section label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -111,8 +114,11 @@
             <select id="order-filter" onchange="renderOrders()">
                 <option value="">Все заказы</option>
                 <option value="new">Новые</option>
-                <option value="work">В работе</option>
-                <option value="done">Выполненные</option>
+                <option value="accepted">Принято</option>
+                <option value="processing">Взят в обработку</option>
+                <option value="delivery">В процессе доставки</option>
+                <option value="done">Завершён</option>
+                <option value="cancelled">Отказ</option>
             </select>
         </div>
         <div id="orders-list"></div>
@@ -190,6 +196,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const ADMIN_PASSWORD = "arhip2026";
+
+    // Единый список статусов
+    const STATUSES = {
+        new:        { text: 'Новый',               cls: 'status-new' },
+        accepted:   { text: 'Принято',             cls: 'status-accepted' },
+        processing: { text: 'Взят в обработку',    cls: 'status-processing' },
+        delivery:   { text: 'В процессе доставки', cls: 'status-delivery' },
+        done:       { text: 'Завершён',            cls: 'status-done' },
+        cancelled:  { text: 'Отказ',               cls: 'status-cancelled' }
+    };
+
+    // Совместимость со старыми статусами
+    function normalizeStatus(s) {
+        if (!s) return 'new';
+        if (s === 'work') return 'processing';
+        if (STATUSES[s]) return s;
+        return 'new';
+    }
 
     let allProducts = [];
     let allOrders = [];
@@ -299,7 +323,7 @@
                     if (!knownOrderIds.has(d.id)) { knownOrderIds.add(d.id); if (!firstOrdersLoad) newOnes++; }
                 });
                 allOrders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                const newCount = allOrders.filter(o => o.status === 'new').length;
+                const newCount = allOrders.filter(o => normalizeStatus(o.status) === 'new').length;
                 const badge = document.getElementById('orders-badge');
                 if (newCount > 0) { badge.style.display = 'block'; badge.innerText = newCount; }
                 else { badge.style.display = 'none'; }
@@ -336,14 +360,14 @@
     window.renderOrders = function(highlightId) {
         const filter = document.getElementById('order-filter').value;
         const container = document.getElementById('orders-list');
-        const filtered = allOrders.filter(o => !filter || o.status === filter);
+        const filtered = allOrders.filter(o => !filter || normalizeStatus(o.status) === filter);
         if (filtered.length === 0) { container.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
         container.innerHTML = '';
         filtered.forEach(o => {
+            const st = normalizeStatus(o.status);
+            const stInfo = STATUSES[st];
             const div = document.createElement('div');
             div.className = 'order-card' + (o.id === highlightId ? ' new' : '');
-            const badgeClass = o.status === 'new' ? 'status-new' : o.status === 'work' ? 'status-work' : 'status-done';
-            const badgeText = o.status === 'new' ? 'Новый' : o.status === 'work' ? 'В работе' : 'Выполнен';
             const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds * 1000).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
             const itemsHtml = (o.items || []).map(i => {
                 let line = `• ${i.name}`;
@@ -358,15 +382,22 @@
                     ${o.meetingTime ? `<div><b>Время:</b> ${o.meetingTime}</div>` : ''}
                 </div>
             ` : '';
+
+            // Опции для выпадающего списка
+            const optionsHtml = Object.keys(STATUSES).map(key => 
+                `<option value="${key}" ${key === st ? 'selected' : ''}>${STATUSES[key].text}</option>`
+            ).join('');
+
             div.innerHTML = `
                 <h3>${o.customerName || 'Без имени'}</h3>
                 <div class="meta">${o.customerPhone || ''}${o.customerTelegram ? ' • ' + o.customerTelegram : ''}<br>${date}</div>
                 <div class="items">${itemsHtml}</div>
                 <div class="total">Итого: ${o.total} ₽</div>
-                <div class="status-row"><span class="status-badge ${badgeClass}">${badgeText}</span></div>
-                <div class="order-actions">
-                    ${o.status !== 'work' && o.status !== 'done' ? `<button class="btn-small" data-id="${o.id}" data-status="work">В работу</button>` : ''}
-                    ${o.status !== 'done' ? `<button class="btn-small" data-id="${o.id}" data-status="done">Выполнен</button>` : ''}
+                <div class="status-row">
+                    <span class="status-badge ${stInfo.cls}">${stInfo.text}</span>
+                    <select class="status-select" data-id="${o.id}">
+                        ${optionsHtml}
+                    </select>
                 </div>
                 <div class="meeting-section">
                     <label>Адрес встречи</label>
@@ -377,21 +408,23 @@
                     ${meetingInfo}
                 </div>
             `;
-            div.querySelectorAll('.order-actions button').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    await updateDoc(doc(db, "orders", btn.dataset.id), { status: btn.dataset.status });
-                });
+
+            // Смена статуса через select
+            div.querySelector('.status-select').addEventListener('change', async (e) => {
+                const newStatus = e.target.value;
+                await updateDoc(doc(db, "orders", o.id), { status: newStatus });
             });
+
+            // Сохранение встречи
             const saveBtn = div.querySelector('.save-btn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async () => {
-                    const addr = document.getElementById('addr-' + o.id).value.trim();
-                    const time = document.getElementById('time-' + o.id).value.trim();
-                    await updateDoc(doc(db, "orders", o.id), { meetingAddress: addr, meetingTime: time });
-                    saveBtn.innerText = 'Сохранено ✓';
-                    setTimeout(() => { saveBtn.innerText = 'Сохранить встречу'; }, 1500);
-                });
-            }
+            saveBtn.addEventListener('click', async () => {
+                const addr = document.getElementById('addr-' + o.id).value.trim();
+                const time = document.getElementById('time-' + o.id).value.trim();
+                await updateDoc(doc(db, "orders", o.id), { meetingAddress: addr, meetingTime: time });
+                saveBtn.innerText = 'Сохранено ✓';
+                setTimeout(() => { saveBtn.innerText = 'Сохранить встречу'; }, 1500);
+            });
+
             container.appendChild(div);
         });
     };
