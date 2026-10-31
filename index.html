@@ -380,52 +380,106 @@
             `}).join('');
         }
 
-        window.openProduct = function(id) {
-            selectedProduct = allProducts.find(p => p.id === id);
-            if (!selectedProduct) return;
-            const availableSizes = selectedProduct.sizes.filter(s => !selectedProduct.unavailableSizes.includes(s));
-            selectedSize = availableSizes.length > 0 ? availableSizes[0] : null;
-            selectedQty = 1;
-            const outOfStock = isProductOutOfStock(selectedProduct);
+window.openProduct = function(id) {
+    selectedProduct = allProducts.find(p => p.id === id);
+    if (!selectedProduct) return;
+    const availableSizes = selectedProduct.sizes.filter(s => !selectedProduct.unavailableSizes.includes(s));
+    selectedSize = availableSizes.length > 0 ? availableSizes[0] : null;
+    selectedQty = 1;
+    currentPhotoIndex = 0;
+    const outOfStock = isProductOutOfStock(selectedProduct);
 
-            const content = document.getElementById('product-modal-content');
-            content.innerHTML = `
-                <div class="product-detail">
-                    <img src="${selectedProduct.images[0] || 'https://via.placeholder.com/300?text=No'}" class="product-detail-img" onclick="openZoom('${selectedProduct.images[0] || ''}')">
-                    ${selectedProduct.images.length > 1 ? `
-                        <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto;">
-                            ${selectedProduct.images.map(img => `<img src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="document.getElementById('main-detail-img').src='${img}'">`).join('')}
-                        </div>
-                    ` : ''}
-                    <h2>${selectedProduct.name}</h2>
-                    <div class="price">${selectedProduct.price} ₽</div>
-                    ${outOfStock ? '<div style="color:var(--danger); font-size:13px; margin-bottom:10px;">Сейчас нет в наличии</div>' : ''}
-                    <div class="desc">${selectedProduct.description}</div>
-                    ${selectedProduct.sizes.length > 0 ? `
-                        <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Размер</div>
-                        <div class="size-selector" id="size-selector">
-                            ${selectedProduct.sizes.map(s => {
-                                const un = selectedProduct.unavailableSizes.includes(s);
-                                const act = s === selectedSize && !un;
-                                return `<button class="size-btn ${un ? 'disabled' : ''} ${act ? 'active' : ''}" ${un ? 'disabled' : ''} onclick="selectSize('${s}')">${s}</button>`;
-                            }).join('')}
-                        </div>
-                    ` : ''}
-                    ${!outOfStock ? `
-                        <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Количество</div>
-                        <div class="qty-control">
-                            <button class="qty-btn" onclick="changeQty(-1)">−</button>
-                            <div class="qty-value" id="qty-display">1</div>
-                            <button class="qty-btn" onclick="changeQty(1)">+</button>
-                        </div>
-                    ` : ''}
+    renderProductModal(outOfStock);
+    document.getElementById('product-modal').classList.add('active');
+};
+
+let currentPhotoIndex = 0;
+
+function renderProductModal(outOfStock) {
+    const content = document.getElementById('product-modal-content');
+    const total = selectedProduct.images.length;
+    const imgSrc = selectedProduct.images[currentPhotoIndex] || 'https://via.placeholder.com/300?text=No';
+
+    content.innerHTML = `
+        <div class="product-detail">
+            <div class="gallery-wrap">
+                <img src="${imgSrc}" class="product-detail-img" id="main-detail-img" 
+                     onclick="openZoom('${imgSrc}')"
+                     ontouchstart="galleryTouchStart(event)"
+                     ontouchend="galleryTouchEnd(event)">
+                ${total > 1 ? `
+                    <button class="gallery-arrow gallery-prev" onclick="prevPhoto(event)">‹</button>
+                    <button class="gallery-arrow gallery-next" onclick="nextPhoto(event)">›</button>
+                    <div class="gallery-counter">${currentPhotoIndex + 1} / ${total}</div>
+                ` : ''}
+            </div>
+            ${total > 1 ? `
+                <div class="gallery-thumbs">
+                    ${selectedProduct.images.map((img, i) => `
+                        <img src="${img}" class="${i === currentPhotoIndex ? 'active' : ''}" onclick="selectPhoto(${i})">
+                    `).join('')}
                 </div>
-            `;
-            document.getElementById('product-modal-footer').innerHTML = outOfStock
-                ? `<button class="btn btn-secondary" onclick="openWaitlist()">Сообщить, когда будет</button>`
-                : `<button class="btn btn-primary" onclick="addToCartFromModal()">Добавить в корзину</button>`;
-            document.getElementById('product-modal').classList.add('active');
-        };
+            ` : ''}
+            <h2>${selectedProduct.name}</h2>
+            <div class="price">${selectedProduct.price} ₽</div>
+            ${outOfStock ? '<div style="color:var(--danger); font-size:13px; margin-bottom:10px;">Сейчас нет в наличии</div>' : ''}
+            <div class="desc">${selectedProduct.description}</div>
+            ${selectedProduct.sizes.length > 0 ? `
+                <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Размер</div>
+                <div class="size-selector" id="size-selector">
+                    ${selectedProduct.sizes.map(s => {
+                        const un = selectedProduct.unavailableSizes.includes(s);
+                        const act = s === selectedSize && !un;
+                        return `<button class="size-btn ${un ? 'disabled' : ''} ${act ? 'active' : ''}" ${un ? 'disabled' : ''} onclick="selectSize('${s}')">${s}</button>`;
+                    }).join('')}
+                </div>
+            ` : ''}
+            ${!outOfStock ? `
+                <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Количество</div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                    <div class="qty-value" id="qty-display">1</div>
+                    <button class="qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    document.getElementById('product-modal-footer').innerHTML = outOfStock
+        ? `<button class="btn btn-secondary" onclick="openWaitlist()">Сообщить, когда будет</button>`
+        : `<button class="btn btn-primary" onclick="addToCartFromModal()">Добавить в корзину</button>`;
+}
+
+window.nextPhoto = function(e) {
+    if (e) e.stopPropagation();
+    if (!selectedProduct || selectedProduct.images.length <= 1) return;
+    currentPhotoIndex = (currentPhotoIndex + 1) % selectedProduct.images.length;
+    renderProductModal(isProductOutOfStock(selectedProduct));
+};
+
+window.prevPhoto = function(e) {
+    if (e) e.stopPropagation();
+    if (!selectedProduct || selectedProduct.images.length <= 1) return;
+    currentPhotoIndex = (currentPhotoIndex - 1 + selectedProduct.images.length) % selectedProduct.images.length;
+    renderProductModal(isProductOutOfStock(selectedProduct));
+};
+
+window.selectPhoto = function(i) {
+    currentPhotoIndex = i;
+    renderProductModal(isProductOutOfStock(selectedProduct));
+};
+
+// Свайп для телефона
+let touchStartX = 0;
+window.galleryTouchStart = function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+};
+window.galleryTouchEnd = function(e) {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) < 40) return; // слишком маленький свайп
+    if (diff > 0) nextPhoto(); // свайп влево — следующее
+    else prevPhoto();          // свайп вправо — предыдущее
+};
 
         window.selectSize = function(size) {
             // Проверяем, доступен ли размер
