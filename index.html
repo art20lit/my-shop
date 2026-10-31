@@ -117,6 +117,75 @@
         .zoom-hint { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.6); font-size: 12px; }
 
         .waitlist-note { background: var(--primary-soft); padding: 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+        /* Галерея в карточке товара */
+.gallery-wrap {
+    position: relative;
+    margin-bottom: 12px;
+}
+.gallery-wrap .product-detail-img {
+    margin-bottom: 0;
+    display: block;
+    cursor: zoom-in;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.gallery-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(30,42,58,0.5);
+    color: white;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 2;
+}
+.gallery-arrow:active { background: rgba(30,42,58,0.75); }
+.gallery-prev { left: 8px; }
+.gallery-next { right: 8px; }
+.gallery-counter {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(30,42,58,0.6);
+    color: white;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    z-index: 2;
+}
+.gallery-thumbs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+.gallery-thumbs::-webkit-scrollbar { display: none; }
+.gallery-thumbs img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0.6;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+    transition: 0.15s;
+}
+.gallery-thumbs img.active {
+    opacity: 1;
+    border-color: var(--primary);
+}
     </style>
 </head>
 <body>
